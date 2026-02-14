@@ -29,8 +29,8 @@
       
       <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-60"></div>
 
-      <div class="absolute bottom-2 right-3">
-        <span class="text-[9px] font-black text-chess-gold uppercase tracking-[0.15em] py-1 px-2 bg-chess-dark/90 rounded-sm">
+      <div class="absolute bottom-3 right-3">
+        <span class="text-[12px] font-black text-chess-gold uppercase tracking-[0.15em] py-1 px-2 bg-chess-dark/90 rounded shadow-sm">
           {{ event.category }}
         </span>
       </div>
