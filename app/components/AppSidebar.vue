@@ -1,0 +1,48 @@
+<template>
+  <aside class="hidden md:block w-64 bg-chess-iron border-r border-gray-600/20 shadow-sm">
+    <div class="sticky top-16 p-6 h-[calc(100vh-16px)] flex flex-col">
+      <nav class="flex-1 space-y-8">
+        <div>
+          <p class="text-[10px] font-bold text-chess-gold/100 uppercase tracking-[0.2em] mb-4">
+            Club Management
+          </p>
+
+          <div class="border-t border-white/10"></div>
+
+
+          <ul class="space-y-1">
+            <li v-for="item in menuItems" :key="item.label">
+              <NuxtLink 
+                :to="item.to" 
+                class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all group"
+                active-class="!text-chess-gold bg-white/10"
+              >
+                <Icon :name="item.icon" size="14" class="opacity-80" />
+                <span>{{ item.label }}</span>
+              </NuxtLink>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="pt-4 border-t border-white/10 flex items-center gap-3">
+        <div class="w-6 h-6 rounded bg-black/20 flex items-center justify-center">
+          <Icon name="fa6-solid:user-tie" class="text-gray-400 text-[10px]" />
+        </div>
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter uppercase">Manager Mode</span>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<script setup>
+const route = useRoute()
+const asdSlug = route.params.asd_slug || 'demo' // Fallback per sviluppo
+const menuItems = [
+  { label: 'Dashboard', icon: 'fa6-solid:chess-board', to: `/${asdSlug}/manager/dashboard` },
+  { label: 'Gestione Eventi', icon: 'fa6-solid:calendar-check', to: `/${asdSlug}/manager/events` },
+  { label: 'Anagrafica Soci', icon: 'fa6-solid:users-rectangle', to: `/${asdSlug}/manager/memberships` },
+  { label: 'Risorse', icon: 'fa6-solid:folder-open', to: `/${asdSlug}/manager/resources` }, 
+  { label: 'Eventi Pubblicati', icon: 'fa6-solid:calendar-days', to: `/${asdSlug}/events` }, 
+]
+</script>
