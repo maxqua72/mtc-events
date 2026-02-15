@@ -19,7 +19,7 @@
     </div>
 
     <div class="h-12 overflow-hidden relative border-b border-gray-100 bg-chess-dark">
-      <NuxtImg 
+      <img 
         :src="displayImage"
         :alt="event.title"
         format="webp"
@@ -41,11 +41,11 @@
         <span class="uppercase">{{ formattedDate }}</span> <span class="mx-1 opacity-30">|</span><span>{{ timeRange }}</span> 
       </p>
 
-      <h3 class="text-xl font-bold text-chess-dark mb-2 leading-tight group-hover:text-chess-brown transition-colors">
+      <h3 class="text-xl font-bold text-chess-dark mb-2 leading-tight group-hover:text-chess-brown transition-colors line-clamp-2">
         {{ event.title }}
       </h3>
 
-      <div class="mt-1">
+      <div class="mt-auto pt-2">
         <component 
           :is="event.link_map ? 'button' : 'div'"
           @click.stop.prevent="event.link_map ? openMap() : null"

@@ -1,4 +1,5 @@
 // server/api/manager/[slug]/events/index.post.ts
+import { ObjectId } from 'mongodb'
 export default defineEventHandler(async (event) => {
   const db = await getDb()
   const body = await readBody(event)
@@ -10,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   const newEvent = {
     ...body,
-    association_id: asd._id,
+    association_id: new ObjectId(asd._id),
     created_at: new Date(),
     updated_at: new Date()
   }
