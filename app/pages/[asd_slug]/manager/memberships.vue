@@ -1,70 +1,83 @@
 <script setup>
-definePageMeta({ layout: 'manager' })
+definePageMeta({ layout: 'default' })
 const route = useRoute()
-const asdSlug = route.params.asd_slug
+const { asd_slug } = route.params
 
-const { data: asd } = await useFetch(`/api/manager/${asdSlug}/info`)
-const { data: memberships, refresh } = await useFetch(`/api/manager/${asdSlug}/memberships`)
+// Recuperiamo prima le info dell'ASD per avere l'ID
+const { data: asd } = await useFetch(`/api/asd/${asd_slug}`)
 
-// Logica colori per lo stato (Hybrid Pro style: colori desaturati con bordi scuri)
-const getStatusStyles = (expiryDate) => {
-  const now = new Date()
-  const expiry = new Date(expiryDate)
-  if (expiry < now) return 'bg-red-50 text-red-600 border-red-100'
-  const diffDays = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24))
-  if (diffDays <= 30) return 'bg-amber-50 text-amber-600 border-amber-100'
-  return 'bg-emerald-50 text-emerald-600 border-emerald-100'
+// Recuperiamo la lista soci filtrata per questa ASD
+const { data: members, refresh } = await useFetch(`/api/manager/${asd_slug}/memberships`)
+
+const showModal = ref(false)
+const selectedMember = ref(null)
+
+const openModal = (member = null) => {
+  selectedMember.value = member
+  showModal.value = true
+}
+
+const deleteMember = async (id) => {
+  if (confirm('Rimuovere definitivamente questo socio?')) {
+    await $fetch(`/api/manager/${asd_slug}/memberships/${id}`, { method: 'DELETE' })
+    refresh()
+  }
 }
 </script>
 
 <template>
-    
-  <div>
-    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-      <div>
-        <h2 class="text-3xl font-black tracking-tight text-slate-900">Anagrafica Soci</h2>
-        <p class="text-slate-500 font-medium">Gestisci le iscrizioni e i rinnovi delle tessere.</p>
-      </div>
-      <button class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-slate-200 hover:scale-[1.02] transition-transform active:scale-95">
-        + Nuovo Socio
+  <div class="space-y-6">
+    <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <h2 class="text-xl font-black text-chess-dark uppercase">Anagrafica Soci</h2>
+      <button @click="openModal()" class="bg-chess-dark text-chess-gold px-5 py-2.5 rounded-lg text-[11px] font-black uppercase flex items-center gap-2">
+        <Icon name="fa6-solid:user-plus" /> Nuovo Socio
       </button>
-    </header>
-
-
-    <div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-50/50 border-b border-slate-100">
-              <th class="p-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Socio</th>
-              <th class="p-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Codice</th>
-              <th class="p-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stato Scadenza</th>
-              <th class="p-6"></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-50">
-            <tr v-for="m in memberships" :key="m._id" class="group hover:bg-slate-50 transition-colors">
-              <td class="p-6">
-                <p class="font-bold text-slate-900">{{ m.name }}</p>
-                <p class="text-xs text-slate-400">{{ m.email }}</p>
-              </td>
-              <td class="p-6">
-                <code class="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded text-slate-600">{{ m.member_code }}</code>
-              </td>
-              <td class="p-6">
-                <span :class="getStatusStyles(m.expiry_date)" class="px-3 py-1 rounded-lg border text-[10px] font-bold uppercase">
-                  {{ new Date(m.expiry_date).toLocaleDateString('it-IT') }}
-                </span>
-              </td>
-              <td class="p-6 text-right">
-                <button class="p-2 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all">
-                   <span class="text-slate-400 font-bold text-xs uppercase px-2">Dettagli</span>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="p-4 text-[10px] font-black uppercase text-gray-400">Socio</th>
+            <th class="p-4 text-[10px] font-black uppercase text-gray-400">email</th>
+            <th class="p-4 text-[10px] font-black uppercase text-gray-400">Codice</th>
+            <th class="p-4 text-[10px] font-black uppercase text-gray-400">Scadenza</th>
+            <th class="p-4 text-[10px] font-black uppercase text-gray-400">Stato</th>
+            <th class="p-4"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          <tr v-for="m in members || []" :key="m._id" class="hover:bg-gray-50 transition-colors">
+            <td class="py-2 px-4">
+              <p class="font-bold text-chess-dark">{{ m.name }}</p>
+            </td>
+            <td class="py-2 px-4 font-mono text-xs text-chess-chocolate">{{ m.email || 'Nessuna email' }}</td>
+            <td class="py-2 px-4 font-mono text-xs text-chess-chocolate">{{ m.member_code }}</td>
+            <td class="py-2 px-4 text-xs font-bold">{{ new Date(m.expiry_date).toLocaleDateString() }}</td>
+            <td class="py-2 px-4">
+              <span class="px-2 py-1 rounded text-[9px] font-black uppercase" 
+                :class="m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                {{ m.status }}
+              </span>
+            </td>
+            <td class="p-2 text-right space-x-2">
+              <button @click="openModal(m)" class="text-gray-400 hover:text-chess-gold"><Icon name="fa6-solid:pen" /></button>
+              <button @click="deleteMember(m._id)" class="text-gray-400 hover:text-red-500"><Icon name="fa6-solid:trash" /></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <Teleport to="body">
+      <MembershipModal 
+        v-if="showModal" 
+        :membership="selectedMember" 
+        :asdId="asd?._id"
+        :asdSlug="asd_slug"
+        @close="showModal = false" 
+        @save="refresh(); showModal = false" 
+      />
+    </Teleport>
   </div>
 </template>

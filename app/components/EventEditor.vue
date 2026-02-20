@@ -113,7 +113,7 @@ const resetToDefault = () => {
 <template>
     <div class="space-y-6 pb-20">
         <div
-            class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm sticky top-0 z-40">
+            class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm sticky top-[64px] z-40">
             <div>
                 <h2 class="text-xl font-black text-chess-dark uppercase tracking-tight">
                     {{ isNew ? 'Nuovo Evento' : 'Modifica Evento' }}

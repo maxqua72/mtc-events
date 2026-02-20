@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // 2. Recuperiamo l'identità dell'utente (es. dalla sessione o localStorage per ora)
   // Nota: In produzione useresti un token JWT o un cookie di sessione
   const savedUser = localStorage.getItem('user_auth') 
-  if (!savedUser) return navigateTo('/login')
+  if (!savedUser) return navigateTo('/admin/login')
 
   const { email } = JSON.parse(savedUser)
 
@@ -24,7 +24,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     query: { email }
   })
 
-  if (!permissions.value) return navigateTo('/login')
+  if (!permissions.value) return navigateTo('/admin/login')
 
   // --- LOGICA DI CONTROLLO ---
 

@@ -1,75 +1,75 @@
+<template>
+  <div class="min-h-screen bg-chess-dark flex flex-col items-center justify-center p-6 text-center">
+    
+    <div class="flex flex-col items-center">
+      <div class="relative w-36 h-36 md:w-48 md:h-48 rounded-full flex items-center justify-center p-2 mb-10 shadow-[0_0_50px_rgba(0,0,0,0.3)]"
+        :style="{ backgroundColor: asdStore.info?.theme_color || '#ffffff' }">
+        
+        <div class="absolute inset-0 rounded-full bg-chess-gold/20 blur-2xl -z-10 animate-pulse"></div>
+        
+        <img v-if="asdStore.info?.logo_url" 
+             :src="asdStore.info.logo_url" 
+             class="w-full h-full object-contain rounded-full" 
+        />
+        <Icon v-else 
+              name="fa6-solid:chess-knight" 
+              class="text-chess-dark text-6xl md:text-7xl" 
+        />
+      </div>
+
+      <div class="space-y-4">
+        <h1 class="text-white text-xl md:text-2xl font-black tracking-[0.1em] leading-tight">
+          {{ asdStore.info?.name || 'Caricamento' }}
+        </h1>
+        
+        
+      </div>
+    </div>
+
+    <div class="absolute bottom-20 w-40 h-1 bg-white/5 overflow-hidden rounded-full">
+      <div class="loading-progress h-full bg-chess-gold"></div>
+    </div>
+  </div>
+</template>
+
 <script setup>
+const asdStore = useAsdStore()
 const route = useRoute()
 const slug = route.params.asd_slug
 
-// Recuperiamo sia i dati dell'ASD che la lista eventi in parallelo
-const [{ data: asd }, { data: events }] = await Promise.all([
-  useFetch(`/api/asd/${slug}`),
-  useFetch(`/api/asd/${slug}/events`)
-])
+definePageMeta({
+  layout: false
+})
 
-const primaryColor = computed(() => asd.value?.theme_color || '#3b82f6')
-
-// Funzione helper per formattare le date
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('it-IT', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  })
-}
+onMounted(() => {
+  // Ho mantenuto i tuoi 3.8 secondi per un'esposizione prolungata del brand
+  setTimeout(() => {
+    navigateTo(`/${slug}/events`)
+  }, 1800)
+})
 </script>
 
-<template>
-  <div v-if="asd" class="min-h-screen bg-slate-50 pb-24">
-    <header :style="{ backgroundColor: primaryColor }" class="text-white p-8 shadow-lg">
-      <div class="max-w-md mx-auto">
-        <h1 class="text-2xl font-black uppercase tracking-tight">{{ asd.name }}</h1>
-        <p class="opacity-90 flex items-center gap-2 mt-1">
-          📍 {{ asd.city }} ({{ asd.province }})
-        </p>
-      </div>
-    </header>
+<style scoped>
 
-    <main class="max-w-md mx-auto p-4">
-      <h2 class="text-lg font-bold text-slate-800 mb-4 mt-4">Upcoming Events</h2>
-      
-      <div v-if="events && events.length > 0" class="space-y-4">
-        <div 
-          v-for="event in events" 
-          :key="event._id" 
-          class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 relative overflow-hidden"
-        >
-          <div class="flex justify-between items-start mb-2">
-            <span class="text-xs font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 uppercase">
-              {{ formatDate(event.start_date) }}
-            </span>
-            <span v-if="event.start_time" class="text-xs font-medium text-slate-400">
-              Starts: {{ event.start_time }}
-            </span>
-          </div>
 
-          <h3 class="text-xl font-bold text-slate-900 mb-1">{{ event.title }}</h3>
-          <p class="text-slate-500 text-sm line-clamp-2 mb-4">{{ event.description }}</p>
-          
-          <div class="flex items-center justify-between mt-2">
-            <div class="text-xs text-slate-400 italic">
-              📍 {{ event.location }}
-            </div>
-            <NuxtLink 
-              :to="`/${slug}/events/${event._id}`"
-              class="text-sm font-bold p-2 px-4 rounded-xl text-white"
-              :style="{ backgroundColor: primaryColor }"
-            >
-              Details
-            </NuxtLink>
-          </div>
-        </div>
-      </div>
+.loading-progress {
+  width: 0%;
+  /* Sincronizzata con il tempo del setTimeout (3.8s) */
+  animation: progress 1.8s linear forwards;
+}
 
-      <div v-else class="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
-        <p class="text-slate-400">No events found for this association.</p>
-      </div>
-    </main>
-  </div>
-</template>
+@keyframes entrance {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes logo-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+</style>

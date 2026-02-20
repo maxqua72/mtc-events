@@ -8,11 +8,20 @@ export const useAsdStore = defineStore('asd', {
   }),
   actions: {
     async loadAsd(slug) {
+      // Doppia sicurezza: evitiamo chiamate doppie
       if (this.info?.slug === slug) return
+      
       this.loading = true
       try {
-        const { data } = await useFetch(`/api/asd/${slug}`)
-        if (data.value) this.info = data.value
+        // Usiamo $fetch per le chiamate dentro le actions
+        const data = await $fetch(`/api/asd/${slug}`)
+        if (data) {
+          this.info = data
+          console.log(`✅ Store ASD popolato per: ${slug}`)
+        }
+      } catch (error) {
+        console.error("❌ Errore caricamento ASD nello store:", error)
+        this.info = null
       } finally {
         this.loading = false
       }

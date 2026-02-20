@@ -3,7 +3,7 @@
     
     
 
-    <AppHeader :info="asdStore.info" :isManager="isManager" />
+    <AppHeader :info="asdInfo" :isManager="isManager" />
     
 
     <div class="flex flex-1 w-full">
@@ -33,6 +33,7 @@
 <script setup>
 import { useAsdStore } from '~/stores/asd'
 const asdStore = useAsdStore()
+const asdInfo = computed(() => asdStore.info)
 const isManager = ref(true) // Da collegare al tuo sistema di Auth in futuro
 </script>
 
