@@ -8,7 +8,8 @@ export const useUserStore = defineStore('user', {
         // Array degli slug visitati per mantenere l'ordine e facilitare il menu switch
         followedAsds: [],
         // Token FCM per le notifiche
-        fcmToken: null
+        fcmToken: null,
+        auth: null, // Per Admin e Manager (UC1) - { email, is_admin, managed_asds }
     }),
 
     actions: {
@@ -92,7 +93,72 @@ export const useUserStore = defineStore('user', {
 
         setFcmToken(token) {
             this.fcmToken = token
-        }
+        },
+
+        async syncMembership(slug) {
+            try {
+                // 1. Recuperiamo il profilo locale per questa ASD
+                const localProfile = this.identities[slug]
+
+                // Se non c'è un'email, non possiamo sincronizzare nulla
+                if (!localProfile?.email) return
+
+                // 2. Chiamata al server passando l'email negli headers
+                const data = await $fetch(`/api/asd/${slug}/sync-status`, {
+                    headers: {
+                        'x-user-email': localProfile.email // Passiamo l'identità al server
+                    }
+                })
+
+                if (data.active) {
+                    // 3a. Il server conferma che è attivo: aggiorniamo i dati (nome, scadenza, etc.)
+                    this.setAsdProfile(slug, data.profile)
+                } else {
+                    // 3b. Il server dice che NON è più attivo: lo declassiamo a visitatore
+                    delete this.identities[slug]
+                    this.saveToLocal()
+
+                    // Opzionale: se l'utente era in una pagina riservata, potresti voler ricaricare
+                    // o mostrare un messaggio, ma per ora il cambio dell'header basta.
+                }
+            } catch (e) {
+                // Se il server è giù o c'è un errore di rete, non cancelliamo i dati locali, 
+                // riproveremo alla prossima navigazione.
+                console.error("Errore sync identità:", e)
+            }
+        },
+
+        // AUTH
+        // Gestione permessi Staff (Manager/Admin)
+        setAuth(authData) {
+            this.auth = authData
+            localStorage.setItem('user_auth', JSON.stringify(authData))
+        },
+        logout() {
+            this.auth = null
+            localStorage.removeItem('user_auth')
+        },
     },
+    /*
+        async syncMembership(slug) {
+            try {
+                // Chiamata a un endpoint leggero che verifica lo stato
+                const data = await $fetch(`/api/asd/${slug}/sync-status`)
+    
+                if (data.active) {
+                    // Aggiorniamo i dati locali (magari la data di scadenza è stata prorogata)
+                    this.setAsdProfile(slug, data.profile)
+                } else {
+                    // Il socio non è più attivo o è stato rimosso: puliamo il profilo locale
+                    delete this.identities[slug]
+                    this.saveToLocal()
+                }
+            } catch (e) {
+                console.error("Errore sync identità:", e)
+            }
+        }
+    */
+    // stores/user.js
+
 
 })

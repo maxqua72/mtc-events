@@ -5,6 +5,7 @@ export default defineEventHandler(async (event) => {
 
   // Inizializziamo sempre la stessa struttura
   const response = {
+    name: '',
     is_admin: false,
     managed_asds: [] as any[]
   }
@@ -14,7 +15,8 @@ export default defineEventHandler(async (event) => {
   // Se l'utente non esiste, restituiamo subito la struttura base "vuota"
   if (!user) return response
 
-  response.is_admin = user.is_admin || false
+  response.is_admin = !!user.is_admin
+  response.name = user.name || 'Utente'
 
   const memberships = await db.collection('managers').aggregate([
     { $match: { user_id: user._id } },

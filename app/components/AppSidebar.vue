@@ -19,7 +19,7 @@
           </ul>
           <div class="mt-6 border-t border-white/10"></div>
         </div>
-        <div>
+        <div v-if="asdSlug">
           <p class="text-[10px] font-bold text-chess-gold/100 uppercase tracking-[0.2em] mb-4">
             Club Management
           </p>
@@ -36,30 +36,47 @@
             </li>
           </ul>
         </div>
+
+        <div v-else-if="isAdmin" class="p-4 bg-black/10 rounded-lg border border-white/5">
+          <p class="text-[10px] text-gray-400 italic">
+            Seleziona un club dalla dashboard per accedere alla gestione specifica.
+          </p>
+        </div>
       </nav>
 
       <div class="pt-4 border-t border-white/10 flex items-center gap-3">
         <div class="w-6 h-6 rounded bg-black/20 flex items-center justify-center">
-          <Icon name="fa6-solid:user-tie" class="text-gray-400 text-[10px]" />
+          <Icon :name="isAdmin ? 'fa6-solid:shield-halved' : 'fa6-solid:user-tie'" class="text-gray-400 text-[10px]" />
         </div>
-        <span class="text-[10px] font-bold text-gray-400 tracking-tighter uppercase">Manager Mode</span>
+        <span class="text-[10px] font-bold text-gray-400 tracking-tighter uppercase">
+          {{ isAdmin ? 'Admin Mode' : 'Manager Mode' }}
+        </span>
       </div>
     </div>
   </aside>
 </template>
 
 <script setup>
+import { useUserStore } from '~/stores/user'
 const route = useRoute()
-const asdSlug = route.params.asd_slug || 'demo' // Fallback per sviluppo
+const userStore = useUserStore()
+const asdSlug = computed(() => route.params.asd_slug)
 
-const isAdmin = ref(true)
+const isAdmin = computed(() => {
+  // Gestiamo sia il booleano che la stringa per sicurezza [cite: 2026-02-07]
+  return userStore.auth?.is_admin === true || userStore.auth?.is_admin === "true"
+})
 
-const menuItems = [
-  { label: 'Dashboard', icon: 'fa6-solid:chess-board', to: `/${asdSlug}/manager/dashboard` },
-  { label: 'Eventi Pubblicati', icon: 'fa6-solid:calendar-days', to: `/${asdSlug}/events` },
-  { label: 'Gestione Eventi', icon: 'fa6-solid:calendar-check', to: `/${asdSlug}/manager/events` },
-  { label: 'Anagrafica Soci', icon: 'fa6-solid:users-rectangle', to: `/${asdSlug}/manager/memberships` },
-  { label: 'Risorse', icon: 'fa6-solid:folder-open', to: `/${asdSlug}/manager/resources` },
+// 3. I menuItems devono essere reattivi allo slug attuale
+const menuItems = computed(() => {
+  if (!asdSlug.value) return []
   
-]
+  return [
+    { label: 'Dashboard', icon: 'fa6-solid:chess-board', to: `/${asdSlug.value}/manager/dashboard` },
+    { label: 'Eventi Pubblicati', icon: 'fa6-solid:calendar-days', to: `/${asdSlug.value}/events` },
+    { label: 'Gestione Eventi', icon: 'fa6-solid:calendar-check', to: `/${asdSlug.value}/manager/events` },
+    { label: 'Anagrafica Soci', icon: 'fa6-solid:users-rectangle', to: `/${asdSlug.value}/manager/memberships` },
+    { label: 'Risorse', icon: 'fa6-solid:folder-open', to: `/${asdSlug.value}/manager/resources` },
+  ]
+})
 </script>

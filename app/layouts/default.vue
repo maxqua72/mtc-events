@@ -1,27 +1,24 @@
 <template>
   <div class="min-h-screen bg-chess-surface flex flex-col font-sans text-chess-dark">
-    
-    
+
+
 
     <AppHeader :info="asdInfo" :isManager="isManager" />
-    
+
 
     <div class="flex flex-1 w-full">
-      
+
       <AppSidebar v-if="isManager" />
 
       <main class="flex-1 px-4 pb-4 pt-4 md:p-10 max-w-7xl mx-auto w-full">
         <div class="md:hidden mb-2">
           <div class="relative">
             <Icon name="fa6-solid:magnifying-glass" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Cerca eventi o soci..." 
-              class="w-full bg-white border border-gray-200 rounded-xl px-11 py-3 text-sm shadow-sm focus:border-chess-gold focus:ring-0 outline-none"
-            >
+            <input type="text" placeholder="Cerca eventi o soci..."
+              class="w-full bg-white border border-gray-200 rounded-xl px-11 py-3 text-sm shadow-sm focus:border-chess-gold focus:ring-0 outline-none">
           </div>
         </div>
-        
+
         <slot />
       </main>
     </div>
@@ -33,8 +30,22 @@
 <script setup>
 import { useAsdStore } from '~/stores/asd'
 const asdStore = useAsdStore()
+const userStore = useUserStore()
+const route = useRoute()
+
 const asdInfo = computed(() => asdStore.info)
-const isManager = ref(true) // Da collegare al tuo sistema di Auth in futuro
+
+const isManager = computed(() => {
+  const auth = userStore.auth
+  if (!auth) return false
+
+  // Se è SuperAdmin ha poteri di gestione ovunque
+  if (auth.is_admin) return true
+
+  // Altrimenti controlliamo se lo slug attuale è nella sua lista di gestione
+  const currentSlug = route.params.asd_slug
+  return auth.managed_asds?.some(asd => asd.asd_slug === currentSlug)
+})
 </script>
 
 <style scoped>
@@ -43,7 +54,7 @@ const isManager = ref(true) // Da collegare al tuo sistema di Auth in futuro
   position: relative;
   z-index: 0;
   /* Rimuoviamo i gradienti invisibili e usiamo un unico gradiente di profondità */
-  background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 100%);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 100%);
   background-attachment: fixed;
 }
 

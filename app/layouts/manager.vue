@@ -81,6 +81,6 @@ const { data: asd } = await useFetch(`/api/manager/${asdSlug}/info`)
 
 const logout = () => {
   localStorage.removeItem('user_auth')
-  navigateTo('/admin/login')
+  navigateTo('/login')
 }
 </script>

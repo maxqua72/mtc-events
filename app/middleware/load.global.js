@@ -41,6 +41,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
       })
     }
 
+    // --- INIZIO SYNC SILENZIOSO ---
+    // Se l'utente ha un'identità salvata per questa ASD, verifichiamo se è ancora valida
+    if (userStore.identities[slug]) {
+      // Non usiamo 'await' perché vogliamo che la pagina si carichi subito.
+      // Il sync avverrà in background.
+      userStore.syncMembership(slug)
+    }
+    // --- FINE SYNC SILENZIOSO ---
+
     // 2. NUOVA LOGICA: Registra l'interesse dell'utente per questa ASD
     // Questo permette l'installazione progressiva della dashboard multi-associazione
     userStore.trackAsdVisit(slug)

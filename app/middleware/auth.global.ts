@@ -10,7 +10,44 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   if (!isAdminPath && !isManagerPath) return
 
   // Evitiamo loop infiniti se siamo già sulla pagina di login
-  if (to.path === '/admin/login') return
+  if (to.path === '/login') return
+
+  // Se lo store è vuoto (es. refresh pagina), proviamo a recuperare dal localStorage
+  const userStore = useUserStore()
+  if (!userStore.auth) {
+
+    const saved = localStorage.getItem('user_auth')
+    if (saved) {
+      // In un'app reale qui faresti una validazione token, 
+      // per ora ripopoliamo lo store con i dati salvati
+      userStore.auth = JSON.parse(saved)
+    }
+  }
+
+  // Se dopo il tentativo non c'è ancora nulla -> Login
+  if (!userStore.auth) return navigateTo('/login')
+
+  const auth = userStore.auth
+
+  // Caso A: Admin
+  if (isAdminPath && !auth.is_admin) {
+    return abortNavigation('Privilegi Admin richiesti')
+  }
+
+  // Caso B: Manager
+  if (isManagerPath) {
+    const slug = to.params.asd_slug
+    if (auth.is_admin) return // Il SuperAdmin passa sempre
+
+    const hasAccess = auth.managed_asds.some(
+      asd => asd.asd_slug === slug && asd.role === 'MANAGER'
+    )
+
+    if (!hasAccess) return abortNavigation('Non sei autorizzato per questa ASD')
+  }
+
+  // TUTTO QUELLO CHE STA SOTTO NON DEVE ESSERE ESEGUITO?
+/*
 
   // 2. Recuperiamo l'identità dell'utente (es. dalla sessione o localStorage per ora)
   // Nota: In produzione useresti un token JWT o un cookie di sessione
@@ -50,5 +87,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     if (!hasAccess) {
       return abortNavigation('Accesso negato: non sei il Manager di questa associazione')
     }
-  }
+      
+  }*/
 })
