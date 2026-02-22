@@ -31,7 +31,8 @@ const form = ref({
     contact_email: '',
     // Link
     link_registration: '',
-    link_flyer: ''
+    link_flyer: '',
+    circuit: 'none'
 })
 
 const showPicker = ref(false)
@@ -50,6 +51,14 @@ watch(() => props.event, (newVal) => {
 }, { immediate: true })
 
 const categories = ['Torneo', 'Gioco Libero', 'Corso', 'Altro']
+
+const circuits = [
+    { id: 'none', label: 'Nessuno' },
+    { id: 'fide', label: 'FIDE (Federazione)' },
+    { id: 'fsi', label: 'FSI (Federazione)' },
+    { id: 'uisp', label: 'UISP' },
+    { id: 'internal', label: 'Interno dell\'Associazione' }
+]
 
 const submitForm = () => {
     // Prepariamo l'oggetto per l'invio al backend
@@ -219,6 +228,8 @@ const resetToDefault = () => {
                 </div>
             </div>
 
+            
+
             <div class="space-y-6">
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
                     <h3 class="text-xs font-black text-chess-chocolate uppercase tracking-[0.2em] mb-4">Pianificazione
@@ -230,6 +241,24 @@ const resetToDefault = () => {
                             <option v-for="cat in categories" :key="cat" :value="cat.toLowerCase()">{{ cat }}</option>
                         </select>
                     </div>
+
+                    <div>
+        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Circuito / Affiliazione</label>
+        <div class="relative">
+            <select v-model="form.circuit"
+                class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-chess-dark appearance-none focus:ring-2 focus:ring-chess-gold/20 outline-none">
+                <option v-for="c in circuits" :key="c.id" :value="c.id">
+                    {{ c.label }}
+                </option>
+            </select>
+            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+                <Icon name="fa6-solid:chevron-down" size="10" />
+            </div>
+        </div>
+        <p class="mt-1.5 text-[9px] text-gray-400 italic">
+            Il logo del circuito apparirà sulla card dell'evento accanto al titolo.
+        </p>
+    </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Inizio Evento</label>
                         <input v-model="form.start_date" type="date"

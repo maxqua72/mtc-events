@@ -22,6 +22,7 @@ export const useAsdStore = defineStore('asd', {
       } catch (error) {
         console.error("❌ Errore caricamento ASD nello store:", error)
         this.info = null
+        throw error
       } finally {
         this.loading = false
       }

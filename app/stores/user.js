@@ -9,7 +9,7 @@ export const useUserStore = defineStore('user', {
         followedAsds: [],
         // Token FCM per le notifiche
         fcmToken: null,
-        auth: null, // Per Admin e Manager (UC1) - { email, is_admin, managed_asds }
+        auth: useCookie('user_auth').value || null, // Per Admin e Manager (UC1) - { email, is_admin, managed_asds }
     }),
 
     actions: {
@@ -130,6 +130,7 @@ export const useUserStore = defineStore('user', {
 
         // AUTH
         // Gestione permessi Staff (Manager/Admin)
+        /*
         setAuth(authData) {
             this.auth = authData
             localStorage.setItem('user_auth', JSON.stringify(authData))
@@ -138,26 +139,28 @@ export const useUserStore = defineStore('user', {
             this.auth = null
             localStorage.removeItem('user_auth')
         },
+        */
+        setAuth(authData) {
+            this.auth = authData
+            const authCookie = useCookie('user_auth', {
+                maxAge: 60 * 60 * 24 * 7, // 7 giorni
+                path: '/'
+            })
+            authCookie.value = authData
+            // Rimuoviamo il vecchio localStorage per pulizia
+            if (import.meta.client) localStorage.removeItem('user_auth')
+        },
+
+        // MODIFICA: Rimuovi il cookie
+        logout() {
+            this.auth = null
+            const authCookie = useCookie('user_auth')
+            authCookie.value = null
+            // Se vuoi resettare anche i dati socio:
+            if (import.meta.client) localStorage.removeItem('user_data')
+        },
     },
-    /*
-        async syncMembership(slug) {
-            try {
-                // Chiamata a un endpoint leggero che verifica lo stato
-                const data = await $fetch(`/api/asd/${slug}/sync-status`)
-    
-                if (data.active) {
-                    // Aggiorniamo i dati locali (magari la data di scadenza è stata prorogata)
-                    this.setAsdProfile(slug, data.profile)
-                } else {
-                    // Il socio non è più attivo o è stato rimosso: puliamo il profilo locale
-                    delete this.identities[slug]
-                    this.saveToLocal()
-                }
-            } catch (e) {
-                console.error("Errore sync identità:", e)
-            }
-        }
-    */
+
     // stores/user.js
 
 

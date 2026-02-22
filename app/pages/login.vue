@@ -28,7 +28,7 @@ const handleLogin = async () => {
     userStore.setAuth(permissions) 
 
     message.value = { type: 'success', text: 'Accesso eseguito.' }
-
+/*
     setTimeout(() => {
       if (permissions.is_admin === true || permissions.is_admin === "true") {
         navigateTo('/admin')
@@ -37,7 +37,17 @@ const handleLogin = async () => {
         const firstSlug = permissions.managed_asds[0]?.asd_slug
         navigateTo(`/${firstSlug}/manager/dashboard`)
       }
-    }, 800)
+    }, 800) */
+
+    setTimeout(() => {
+      // Usiamo il valore appena ricevuto o quello nello store
+      if (permissions.is_admin) {
+        navigateTo('/admin')
+      } else {
+        const firstSlug = permissions.managed_asds[0]?.asd_slug
+        navigateTo(`/${firstSlug}/manager/dashboard`)
+      }
+    }, 500)
 
   } catch (e) {
     message.value = { 

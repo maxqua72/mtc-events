@@ -12,6 +12,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     to.path.startsWith('/admin') || 
     to.path.startsWith('/login') || 
     to.path.startsWith('/api') ||
+    to.path.startsWith('/img') ||
     to.path.includes('.') ||
     to.path.startsWith('/_')
   ) {
@@ -30,13 +31,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
     
     // Altrimenti carichiamo i dati
-    await asdStore.loadAsd(slug)
+    try {
+      await asdStore.loadAsd(slug)
+    } catch (e) {
+    throw createError({
+      statusCode: 404,
+      message: `L'associazione "${slug}" non è censita nei nostri sistemi.`,
+      fatal: true
+    })
+  }
 
     // Se dopo il caricamento l'info è ancora null, l'ASD non esiste
     if (!asdStore.info) {
       throw createError({
         statusCode: 404,
-        statusMessage: `L'associazione "${slug}" non è censita nei nostri sistemi.`,
+        message: `L'associazione "${slug}" non è censita nei nostri sistemi.`,
         fatal: true // Importante: forza la visualizzazione della pagina di errore anche lato client
       })
     }
