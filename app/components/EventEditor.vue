@@ -1,7 +1,8 @@
 <script setup>
 const props = defineProps({
     event: { type: Object, default: null },
-    asdSlug: { type: String, required: true }
+    asdSlug: { type: String, required: true },
+    isGenerator: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['save', 'cancel'])
@@ -48,7 +49,7 @@ watch(() => props.event, (newVal) => {
             registration_time: newVal.registration_time?.$date ? newVal.registration_time.$date.split('T')[0] : (newVal.registration_time?.split?.('T')[0] || '')
         }
     }
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 const categories = ['Torneo', 'Gioco Libero', 'Corso', 'Altro']
 
@@ -91,7 +92,7 @@ const handleFileUpload = async (e) => {
     formData.append('file', file)
     formData.append('name', `EVENT_IMG_${Date.now()}`)
     // Aggiungiamo un flag per dire che NON deve apparire nella libreria generale
-    formData.append('is_event_private', 'true') 
+    formData.append('is_event_private', 'true')
 
     try {
         const res = await $fetch(`/api/manager/${props.asdSlug}/resources`, {
@@ -117,6 +118,21 @@ const resetToDefault = () => {
     form.value.image_url = ''
     form.value.resource_id = null
 }
+
+const uiTexts = computed(() => {
+    if (props.isGenerator) {
+        return {
+            title: isNew.value ? 'Nuovo Evento Ricorrente' : 'Modifica Evento Ricorrente',
+            subtitle:  isNew.value ? 'Stai definendo il modello per la generazione automatica degli eventi.':'Le modifiche influenzeranno solo i futuri eventi generati.',
+            saveLabel: isNew.value ? 'Salva Modello' : ' Salva modifiche'
+        }
+    }
+    return {
+        title: isNew.value ? 'Nuovo Evento' : 'Modifica Evento',
+        subtitle: `Stai lavorando come MANAGER su: ${form.value.title || 'Nuovo Titolo'}`,
+        saveLabel: isNew.value ? 'Salva Evento' : ' Salva modifiche'
+    }
+})
 </script>
 
 <template>
@@ -125,9 +141,9 @@ const resetToDefault = () => {
             class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm sticky top-[64px] z-40">
             <div>
                 <h2 class="text-xl font-black text-chess-dark uppercase tracking-tight">
-                    {{ isNew ? 'Nuovo Evento' : 'Modifica Evento' }}
+                    {{ uiTexts.title }}
                 </h2>
-                <p class="text-xs text-gray-500 mt-1">Stai lavorando come MANAGER su: {{ form.title || 'Nuovo Titolo' }}
+                <p class="text-xs text-gray-500 mt-1">{{ uiTexts.subtitle }}
                 </p>
             </div>
 
@@ -149,7 +165,7 @@ const resetToDefault = () => {
                     class="text-[11px] font-bold text-gray-400 uppercase hover:text-gray-600 transition-colors">Annulla</button>
                 <button @click="submitForm"
                     class="bg-chess-dark text-chess-gold px-6 py-3 rounded-lg text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg">
-                    Salva Modifiche
+                    {{ uiTexts.saveLabel }}
                 </button>
             </div>
         </div>
@@ -226,9 +242,15 @@ const resetToDefault = () => {
                         </div>
                     </div>
                 </div>
+
+                <div v-if="$slots['additional-fields']" class="lg:col-span-2">
+                    <slot name="additional-fields" />
+                </div>
             </div>
 
             
+
+
 
             <div class="space-y-6">
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
@@ -243,22 +265,23 @@ const resetToDefault = () => {
                     </div>
 
                     <div>
-        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Circuito / Affiliazione</label>
-        <div class="relative">
-            <select v-model="form.circuit"
-                class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-chess-dark appearance-none focus:ring-2 focus:ring-chess-gold/20 outline-none">
-                <option v-for="c in circuits" :key="c.id" :value="c.id">
-                    {{ c.label }}
-                </option>
-            </select>
-            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
-                <Icon name="fa6-solid:chevron-down" size="10" />
-            </div>
-        </div>
-        <p class="mt-1.5 text-[9px] text-gray-400 italic">
-            Il logo del circuito apparirà sulla card dell'evento accanto al titolo.
-        </p>
-    </div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Circuito /
+                            Affiliazione</label>
+                        <div class="relative">
+                            <select v-model="form.circuit"
+                                class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-chess-dark appearance-none focus:ring-2 focus:ring-chess-gold/20 outline-none">
+                                <option v-for="c in circuits" :key="c.id" :value="c.id">
+                                    {{ c.label }}
+                                </option>
+                            </select>
+                            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+                                <Icon name="fa6-solid:chevron-down" size="10" />
+                            </div>
+                        </div>
+                        <p class="mt-1.5 text-[9px] text-gray-400 italic">
+                            Il logo del circuito apparirà sulla card dell'evento accanto al titolo.
+                        </p>
+                    </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Inizio Evento</label>
                         <input v-model="form.start_date" type="date"

@@ -82,6 +82,8 @@ const publishAllFiltered = async () => {
       </div>
     </div>
 
+    <ManagerTabs active="events" :asdSlug="asdSlug" />
+
     <EventFilters v-model="activeFilter" :filters="filters" />
 
     <div v-if="filteredEvents.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -57,7 +57,9 @@
           </h3>
         </div>
 
-
+        <div class="mt-1 mb-3">
+          <slot name="extra" />
+        </div>
 
         <div class="mt-auto pt-2">
           <component :is="event.link_map ? 'button' : 'div'" @click.stop.prevent="event.link_map ? openMap() : null"

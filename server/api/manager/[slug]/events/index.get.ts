@@ -9,6 +9,6 @@ export default defineEventHandler(async (event) => {
   // Restituisce gli eventi futuri o recenti dell'ASD
   return await db.collection('events')
     .find({ association_id: asd._id })
-    .sort({ start_date: -1 })
+    .sort({ start_date: 1 })
     .toArray()
 })
