@@ -32,7 +32,11 @@ export default defineEventHandler(async (event) => {
 
   // 2. Se NON c'è ID, gestiamo il rolling di GRUPPO (Filtrato o Globale)
   const category = query.category as string
-  const filter: any = { asd_slug: slug }
+  const filter: any = { 
+    asd_slug: slug,
+    status: 'active',
+    is_published: true
+ }
   
   if (category && category !== 'tutti') {
     filter.category = category.toLowerCase()

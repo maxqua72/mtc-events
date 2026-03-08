@@ -14,7 +14,7 @@
                 <button @click="triggerGlobalRolling"
                     class="flex-1 md:flex-none bg-amber-500 text-white px-4 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-md flex items-center justify-center gap-2">
                     <Icon name="fa6-solid:gears" size="14" />
-                    Rolling {{ activeFilter === 'Tutti' ? 'Globale' : activeFilter }}
+                    Rolling {{ activeFilter.value === 'all' ? 'Globale' : activeFilterLabel }}
                 </button>
 
                 <NuxtLink :to="`/${asdSlug}/manager/generators/new`"
@@ -52,27 +52,38 @@ const asdSlug = route.params.asd_slug
 definePageMeta({ layout: 'default' })
 
 // 1. Stato dei filtri (uguale a gestione eventi)
-const activeFilter = ref('Tutti')
-const filters = ['Tutti', 'Tornei', 'Gioco Libero', 'Corsi', 'Altro']
+const activeFilter = ref('all')
+const filters = [
+  { label: 'Tutti', value: 'all' },
+  { label: 'Tornei', value: 'torneo' },
+  { label: 'Gioco Libero', value: 'gioco libero' },
+  { label: 'Corsi', value: 'corso' },
+  { label: 'Altro', value: 'altro' }
+]
+
+const activeFilterLabel = computed(() => {
+  return filters.find(f => f.value === activeFilter.value)?.label || 'Globale'
+})
+
+const filteredGenerators = computed(() => {
+  if (!generators.value) return []
+  return activeFilter.value === 'all' 
+    ? generators.value 
+    : generators.value.filter(e => e.category?.toLowerCase() === activeFilter.value)
+})
 
 const { data: generators, refresh, pending } = await useFetch(`/api/manager/${asdSlug}/generators`)
 
-// 2. Logica di filtraggio calcolata
-const filteredGenerators = computed(() => {
-    if (!generators.value) return []
-    return activeFilter.value === 'Tutti'
-        ? generators.value
-        : generators.value.filter(g => g.category?.toLowerCase() === activeFilter.value.toLowerCase())
-})
+
 
 const triggerGlobalRolling = async () => {
-    const filterLabel = activeFilter.value === 'Tutti' ? 'tutte le' : `tutte le matrici "${activeFilter.value}"`
+    const filterLabel = activeFilter.value === 'all' ? 'tutte le' : `tutte le matrici "${activeFilter.value}"`
 
     if (!confirm(`Lanciare la generazione per ${filterLabel}?`)) return
 
     try {
         // Passiamo la categoria come query parameter
-        const categoryParam = activeFilter.value !== 'Tutti' ? `?category=${activeFilter.value.toLowerCase()}` : ''
+        const categoryParam = activeFilter.value !== 'all' ? `?category=${activeFilter.value.toLowerCase()}` : ''
 
         await $fetch(`/api/manager/${asdSlug}/generators/rolling${categoryParam}`, {
             method: 'POST'

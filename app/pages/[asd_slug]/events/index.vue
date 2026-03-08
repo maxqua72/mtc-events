@@ -3,17 +3,25 @@ const route = useRoute()
 
 definePageMeta({ layout: 'default' })
 
-const activeFilter = ref('Tutti')
-const filters = ['Tutti', 'Tornei', 'Gioco Libero', 'Corsi', 'Altro']
-
-const { data: events } = await useFetch(`/api/asd/${route.params.asd_slug}/events`)
+const activeFilter = ref('all')
+const filters = [
+  { label: 'Tutti', value: 'all' },
+  { label: 'Tornei', value: 'torneo' },
+  { label: 'Gioco Libero', value: 'gioco libero' },
+  { label: 'Corsi', value: 'corso' },
+  { label: 'Altro', value: 'altro' }
+]
 
 const filteredEvents = computed(() => {
   if (!events.value) return []
-  return activeFilter.value === 'Tutti' 
+  return activeFilter.value === 'all' 
     ? events.value 
-    : events.value.filter(e => e.category === activeFilter.value)
+    : events.value.filter(e => e.category?.toLowerCase() === activeFilter.value)
 })
+
+const { data: events } = await useFetch(`/api/asd/${route.params.asd_slug}/events`)
+
+
 </script>
 
 <template>

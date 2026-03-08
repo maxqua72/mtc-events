@@ -100,8 +100,8 @@
         <StatCard 
           label="Altro" 
           subTitle="servizi attivi"
-          value="0"
-          :subValue="0"
+          :value="stats.activities.others.published"
+          :subValue="stats.activities.others.draft"
           icon="fa6-solid:ellipsis"
           color="gray"
           trend=""

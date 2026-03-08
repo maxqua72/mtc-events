@@ -47,16 +47,20 @@ export default defineEventHandler(async (event) => {
     },
     activities: {
       tournaments: {
-        published: events.filter((e) => e.category === 'tournament' && e.status === 'published').length,
-        draft: events.filter((e) => e.category === 'tournament' && e.status === 'draft').length
+        published: events.filter((e) => e.category === 'torneo' && e.is_published === true).length,
+        draft: events.filter((e) => e.category === 'torneo' && e.is_published === false).length
       },
       courses: {
-        published: events.filter((e) => e.category === 'course' && e.status === 'published').length,
-        draft: events.filter((e) => e.category === 'course' && e.status === 'draft').length
+        published: events.filter((e) => e.category === 'corso' && e.is_published === true).length,
+        draft: events.filter((e) => e.category === 'corso' && e.is_published === false).length
       },
       free_play: {
-        published: events.filter((e) => e.category === 'free_play' && e.status === 'published').length,
-        draft: events.filter((e) => e.category === 'free_play' && e.status === 'draft').length
+        published: events.filter((e) => e.category === 'gioco libero' && e.is_published === true).length,
+        draft: events.filter((e) => e.category === 'gioco libero' && e.is_published === false).length
+      },
+      others: {
+        published: events.filter((e) => e.category === 'altro' && e.is_published === true).length,
+        draft: events.filter((e) => e.category === 'altro' && e.is_published === false).length
       }
     }
   }

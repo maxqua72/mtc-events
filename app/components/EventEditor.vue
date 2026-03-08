@@ -123,7 +123,7 @@ const uiTexts = computed(() => {
     if (props.isGenerator) {
         return {
             title: isNew.value ? 'Nuovo Evento Ricorrente' : 'Modifica Evento Ricorrente',
-            subtitle:  isNew.value ? 'Stai definendo il modello per la generazione automatica degli eventi.':'Le modifiche influenzeranno solo i futuri eventi generati.',
+            subtitle: (isNew.value ? 'Stai definendo il modello per la generazione automatica degli eventi.' : 'Le modifiche influenzeranno solo i futuri eventi generati.') + ' In bozza la generazione automatica è disabilitata.',
             saveLabel: isNew.value ? 'Salva Modello' : ' Salva modifiche'
         }
     }
@@ -160,6 +160,7 @@ const uiTexts = computed(() => {
                             :class="form.is_published ? 'translate-x-6' : 'translate-x-1'" />
                     </button>
                 </div>
+                
 
                 <button @click="$emit('cancel')"
                     class="text-[11px] font-bold text-gray-400 uppercase hover:text-gray-600 transition-colors">Annulla</button>
@@ -248,7 +249,7 @@ const uiTexts = computed(() => {
                 </div>
             </div>
 
-            
+
 
 
 

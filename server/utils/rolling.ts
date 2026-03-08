@@ -35,6 +35,7 @@ export const executeRolling = async (db, generator, targetDate) => {
         _id: new ObjectId(), 
         generator_id: generator._id, // Riferimento corretto alla matrice
         start_date: new Date(checkDate),
+        end_date: new Date(checkDate),
         is_published: generator.recurrence?.direct_publish || false,
         created_at: new Date(),
         updated_at: new Date()

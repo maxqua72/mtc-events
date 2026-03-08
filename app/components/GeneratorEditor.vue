@@ -14,6 +14,7 @@ const recurrenceData = ref({ ...props.initialData.recurrence })
 const handleFinalSave = (eventFields) => {
   const finalPayload = {
     ...eventFields,             // Qui ci sono titolo, categoria, location, etc.
+    is_published: eventFields.is_published || false,
     recurrence: recurrenceData.value // Qui c'è la logica dei giorni e rolling
   }
   emit('save', finalPayload)

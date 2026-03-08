@@ -100,7 +100,7 @@ definePageMeta({ layout: 'default' })
                 </div>
 
                 <h1
-                    class="text-3xl md:text-5xl font-black text-white uppercase tracking-tight leading-none event-title">
+                    class="text-3xl xl:text-5xl font-black text-white uppercase tracking-tight leading-none event-title">
                     {{ event.title }}
                 </h1>
             </div>
@@ -152,7 +152,7 @@ definePageMeta({ layout: 'default' })
             </div>
 
             <div class="space-y-4">
-                <div class="bg-chess-dark p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
+                <div class="bg-chess-dark sm:p-8 md:p-8 lg:p-6 xl:p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
 
                     <div class="space-y-6 relative z-10">
                         <div>

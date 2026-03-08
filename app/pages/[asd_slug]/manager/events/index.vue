@@ -4,18 +4,26 @@ const asdSlug = route.params.asd_slug
 
 definePageMeta({ layout: 'default' })
 
-const activeFilter = ref('Tutti')
-const filters = ['Tutti', 'Tornei', 'Gioco Libero', 'Corsi', 'Altro']
+const activeFilter = ref('all')
+const filters = [
+  { label: 'Tutti', value: 'all' },
+  { label: 'Tornei', value: 'torneo' },
+  { label: 'Gioco Libero', value: 'gioco libero' },
+  { label: 'Corsi', value: 'corso' },
+  { label: 'Altro', value: 'altro' }
+]
+
+const filteredEvents = computed(() => {
+  if (!events.value) return []
+  return activeFilter.value === 'all' 
+    ? events.value 
+    : events.value.filter(e => e.category?.toLowerCase() === activeFilter.value)
+})
 
 // Fetch degli eventi (inclusi quelli non pubblicati per il MANAGER)
 const { data: events, refresh } = await useFetch(`/api/manager/${asdSlug}/events/`)
 
-const filteredEvents = computed(() => {
-  if (!events.value) return []
-  return activeFilter.value === 'Tutti'
-    ? events.value
-    : events.value.filter(e => e.category === activeFilter.value)
-})
+
 
 const deleteEvent = async (id) => {
   if (confirm('Sei sicuro di voler eliminare questo evento?')) {
@@ -34,7 +42,7 @@ const publishAllFiltered = async () => {
 
   if (targets.length === 0) return
 
-  const confirmMsg = activeFilter.value === 'Tutti'
+  const confirmMsg = activeFilter.value === 'all'
     ? `Vuoi pubblicare tutti i ${targets.length} eventi in bozza?`
     : `Vuoi pubblicare i ${targets.length} eventi in bozza della categoria ${activeFilter.value}?`
 
@@ -45,7 +53,7 @@ const publishAllFiltered = async () => {
         method: 'POST',
         body: {
           eventIds: targets.map(e => e._id),
-          category: activeFilter.value !== 'Tutti' ? activeFilter.value : null
+          category: activeFilter.value !== 'all' ? activeFilter.value : null
         }
       })
       refresh() // Ricarica la lista
@@ -72,7 +80,7 @@ const publishAllFiltered = async () => {
         <button v-if="draftCount > 0" @click="publishAllFiltered"
           class="flex-1 md:flex-none bg-green-600 text-white px-4 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all shadow-md flex items-center justify-center gap-2">
           <Icon name="fa6-solid:cloud-arrow-up" size="14" />
-          Pubblica {{ draftCount }} {{ activeFilter === 'Tutti' ? 'Bozze' : activeFilter }}
+          Pubblica {{ draftCount }} {{ activeFilter.value === 'all' ? 'Bozze' : activeFilter.label }}
         </button>
 
         <NuxtLink :to="`/${asdSlug}/manager/events/new`"
@@ -111,7 +119,7 @@ const publishAllFiltered = async () => {
     <div v-else class="bg-white border-2 border-dashed border-gray-200 rounded-3xl py-20 text-center">
       <Icon name="fa6-solid:calendar-xmark" class="text-gray-200 mb-4" size="48" />
       <p class="text-gray-400 font-bold uppercase tracking-widest text-sm">Nessun evento trovato</p>
-      <button @click="activeFilter = 'Tutti'" class="text-chess-gold text-xs font-bold mt-2 underline">Resetta
+      <button @click="activeFilter.value = 'all'" class="text-chess-gold text-xs font-bold mt-2 underline">Resetta
         filtri</button>
     </div>
   </div>
