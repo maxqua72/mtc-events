@@ -17,7 +17,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const auth = useCookie('user_auth').value
 
   // 3. Se non c'è auth -> Login
-  if (!auth) return navigateTo('/login')
+  if (!auth) {
+    return navigateTo({
+      path: '/login',
+      query: { redirect: to.fullPath } // Salviamo dove voleva andare l'utente
+    })
+  }
 
   // Caso A: Admin
   if (isAdminPath && !auth.is_admin) {

@@ -16,6 +16,20 @@ export const useUserStore = defineStore('user', {
         // Inizializza lo store caricando i dati dal localStorage
         initStore() {
             if (process.server) return
+
+            // 1. SINCRONIZZAZIONE FORZATA AUTH (Manager/Admin)
+            // Leggiamo il valore REALE del cookie in questo istante
+            const actualCookie = useCookie('user_auth').value
+            
+            if (!actualCookie && this.auth) {
+                // Caso: Il cookie è sparito ma lo store ha ancora i vecchi dati
+                console.log('🧹 Pulizia sessione: Cookie non trovato, resetto auth.');
+                this.auth = null;
+            } else if (actualCookie) {
+                // Caso: Il cookie esiste, aggiorniamo lo store per sicurezza
+                this.auth = actualCookie;
+            }
+
             const saved = localStorage.getItem('user_data')
             if (saved) {
                 const parsed = JSON.parse(saved)

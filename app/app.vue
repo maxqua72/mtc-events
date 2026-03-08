@@ -16,7 +16,11 @@ useHead({
 
 
 <template>
-  <NuxtLayout>
-    <NuxtPage />
-  </NuxtLayout>
+  <div>
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+
+    <PwaUpdateBanner />
+  </div>
 </template>

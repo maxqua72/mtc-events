@@ -26,7 +26,8 @@ export default defineNuxtConfig({
   },
   css: ['@/assets/css/main.css'],
   pwa: {
-    registerType: 'autoUpdate',
+    //registerType: 'autoUpdate', -- aggiorna senza avvertire l'utente (non ideale per app con dati dinamici come la nostra)
+    registerType: 'prompt',
     manifest: {
       id: '/',
       name: 'MTC Events',
@@ -62,12 +63,28 @@ export default defineNuxtConfig({
           form_factor: 'wide',
           label: 'MTC Events Desktop'
         }
-      ]
+      ],
+
+      protocol_handlers: [
+        {
+          protocol: "web+mtcevents",
+          url: "/join?t=%s"
+        }
+      ],
+      
     },
     workbox: {
       navigateFallback: '/',
       // Opzionale: evita che le API vengano intercettate dal fallback
       navigateFallbackDenylist: [/^\/api/], 
+      skipWaiting: false,   // Impedisce l'aggiornamento automatico silente
+      clientsClaim: true,   // Permette al nuovo SW di prendere il controllo subito dopo l'attivazione
+      cleanupOutdatedCaches: true
+    },
+    client: {
+      installPrompt: true,
+      //periodicSyncForUpdates: 3600 // Controlla ogni ora
+      periodicSyncForUpdates: 60 // Controlla ogni ora
     },
     devOptions: {
       enabled: true,

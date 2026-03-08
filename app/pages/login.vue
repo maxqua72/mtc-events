@@ -1,4 +1,5 @@
 <script setup>
+const route = useRoute() // Per leggere i parametri della URL
 // 1. Importa lo store
 const userStore = useUserStore()
 const email = ref('')
@@ -44,8 +45,21 @@ const handleLogin = async () => {
       if (permissions.is_admin) {
         navigateTo('/admin')
       } else {
-        const firstSlug = permissions.managed_asds[0]?.asd_slug
-        navigateTo(`/${firstSlug}/manager/dashboard`)
+        //const firstSlug = permissions.managed_asds[0]?.asd_slug
+        //navigateTo(`/${firstSlug}/manager/dashboard`)
+        // 1. Controlliamo se c'è una destinazione salvata
+        const redirectTo = route.query.redirect
+
+        if (redirectTo) {
+          // Opzionale: controlliamo se il manager ha effettivamente accesso a quell'ASD
+          // estraendo lo slug dalla URL redirectTo se necessario, 
+          // ma il middleware lo bloccherà comunque dopo il redirect se non ha permessi.
+          navigateTo(redirectTo)
+        } else {
+          // 2. Fallback: se non c'era un redirect, usiamo la prima ASD
+          const firstSlug = permissions.managed_asds[0]?.asd_slug
+          navigateTo(`/${firstSlug}/manager/dashboard`)
+        }
       }
     }, 500)
 
