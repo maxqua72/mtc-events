@@ -1,6 +1,6 @@
 <template>
   <Transition name="update-slide">
-    <div v-if="$pwa?.needRefresh" 
+    <div v-if="$pwa !== undefined && $pwa.needRefresh" 
          class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000] w-[90%] max-w-sm bg-chess-iron border border-chess-gold/30 p-5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col gap-4 backdrop-blur-xl">
       
       <div class="flex items-start gap-4">

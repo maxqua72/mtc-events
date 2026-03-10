@@ -83,8 +83,8 @@ export default defineNuxtConfig({
     },
     client: {
       installPrompt: true,
-      //periodicSyncForUpdates: 3600 // Controlla ogni ora
-      periodicSyncForUpdates: 60 // Controlla ogni ora
+      periodicSyncForUpdates: 3600 // Controlla ogni ora
+      //periodicSyncForUpdates: 60 // Controlla ogni ora
     },
     devOptions: {
       enabled: true,
