@@ -29,6 +29,16 @@
   </Transition>
 </template>
 
+<script setup>
+const { $pwa } = useNuxtApp()
+
+// Creiamo un riferimento che sarà vero solo sul client e se pwa è definito
+const showBanner = computed(() => {
+  if (import.meta.server) return false
+  return $pwa && $pwa.needRefresh
+})
+</script>
+
 <style scoped>
 .update-slide-enter-active, .update-slide-leave-active {
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);

@@ -1,4 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+console.log('DEBUG ENV:', process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID)
 export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
@@ -22,10 +23,26 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Le chiavi qui dentro sono visibili solo Server-side
     mongodbUri: process.env.MONGODB_URI || 'mongodb://0.0.0.0:27017/mtc_events',
+
+    // Variabili solo lato server (es. per inviare notifiche)
+    firebaseServiceAccount: process.env.FIREBASE_SERVICE_ACCOUNT,
+
+    public: {
+      // Variabili accessibili anche lato client (per ricevere notifiche)
+      firebase: {
+        apiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID,
+        messagingSenderId: process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID,
+        vapidKey: process.env.NUXT_PUBLIC_FIREBASE_VAPID_KEY
+      }
+    }
     
   },
   css: ['@/assets/css/main.css'],
   pwa: {
+    disable: process.dev, // Disabilita PWA in sviluppo per evitare cache aggressive
     //registerType: 'autoUpdate', -- aggiorna senza avvertire l'utente (non ideale per app con dati dinamici come la nostra)
     registerType: 'prompt',
     manifest: {
@@ -79,7 +96,10 @@ export default defineNuxtConfig({
       navigateFallbackDenylist: [/^\/api/], 
       skipWaiting: false,   // Impedisce l'aggiornamento automatico silente
       clientsClaim: true,   // Permette al nuovo SW di prendere il controllo subito dopo l'attivazione
-      cleanupOutdatedCaches: true
+      cleanupOutdatedCaches: true,
+
+      // firebase 
+      importScripts: ['/firebase-messaging-sw.js']
     },
     client: {
       installPrompt: true,

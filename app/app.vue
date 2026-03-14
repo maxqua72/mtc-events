@@ -20,7 +20,10 @@ useHead({
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-
-    <PwaUpdateBanner />
+    <ClientOnly>
+      <PwaUpdateBanner />
+      <FcmHandler />
+    </ClientOnly>
+    
   </div>
 </template>

@@ -9,6 +9,7 @@ export const useUserStore = defineStore('user', {
         followedAsds: [],
         // Token FCM per le notifiche
         fcmToken: null,
+        isNotificationSupported: false,
         auth: useCookie('user_auth').value || null, // Per Admin e Manager (UC1) - { email, is_admin, managed_asds }
     }),
 
@@ -175,7 +176,22 @@ export const useUserStore = defineStore('user', {
         },
     },
 
-    // stores/user.js
+    async saveTokenToDatabase(token, asdSlug) {
+      if (!this.auth?.email) return;
+
+      try {
+        await $fetch(`/api/asd/${asdSlug}/members/sync-fcm-token`, {
+          method: 'POST',
+          body: { 
+            email: this.auth.email, 
+            token: token 
+          }
+        });
+        this.fcmToken = token;
+      } catch (err) {
+        console.error("Errore salvataggio token su DB", err);
+      }
+    }
 
 
 })
