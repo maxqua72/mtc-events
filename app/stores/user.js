@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
     state: () => ({
+        isInitialized: false,
         // Lista delle identità dell'utente (una per ogni ASD visitata)
         // Struttura: { asd_slug: { email, name, start_date, expiry_date, role } }
         identities: {},
@@ -16,7 +17,9 @@ export const useUserStore = defineStore('user', {
     actions: {
         // Inizializza lo store caricando i dati dal localStorage
         initStore() {
-            if (process.server) return
+            if (process.server || this.isInitialized) return
+
+            console.log('🔄 Avvio idratazione store...');
 
             // 1. SINCRONIZZAZIONE FORZATA AUTH (Manager/Admin)
             // Leggiamo il valore REALE del cookie in questo istante
@@ -33,26 +36,38 @@ export const useUserStore = defineStore('user', {
 
             const saved = localStorage.getItem('user_data')
             if (saved) {
+                try {
                 const parsed = JSON.parse(saved)
 
                 // Uniamo gli slug: prendiamo quelli salvati e aggiungiamo quelli 
                 // eventualmente già presenti nello stato (caricati dal server)
-                const combinedSlugs = [...new Set([...parsed.followedAsds, ...this.followedAsds])]
+            /*    const combinedSlugs = [...new Set([...parsed.followedAsds, ...this.followedAsds])]
 
                 // Uniamo le identità
                 const combinedIdentities = { ...parsed.identities, ...this.identities }
 
                 this.followedAsds = combinedSlugs
                 this.identities = combinedIdentities
-                this.fcmToken = parsed.fcmToken || this.fcmToken
-
+                this.fcmToken = parsed.fcmToken || this.fcmToken */
+                
+                // Usiamo l'assegnazione diretta per non triggerare saveToLocal accidentalmente
+                this.followedAsds = parsed.followedAsds || []
+                this.identities = parsed.identities || {}
+                this.fcmToken = parsed.fcmToken || null
+                console.log('✅ Dati recuperati dal localStorage');
+                
                 console.log('📦 Store idratato e unito:', { slugs: this.followedAsds })
+                } catch (e) {
+                    console.error("Errore parsing localStorage", e);
+                }
             }
+            this.isInitialized = true
+            console.log('📦 Store idratato con successo')
         },
 
         // Salva lo stato attuale nel localStorage
         saveToLocal() {
-            if (process.server) return
+            if (process.server || !this.isInitialized) return
             const dataToSave = {
                 identities: this.identities,
                 followedAsds: this.followedAsds,
@@ -67,6 +82,9 @@ export const useUserStore = defineStore('user', {
         trackAsdVisit(slug) {
             if (!slug) return
 
+            // Forza l'idratazione se non è ancora avvenuta
+            if (!this.isInitialized) this.initStore()
+/*
             // Se siamo sul client e non abbiamo ancora caricato i vecchi dati, facciamolo ora
             // (Piccola sicurezza extra se onMounted di app.vue ritarda)
             if (import.meta.client && this.followedAsds.length <= 1 && localStorage.getItem('user_data')) {
@@ -75,7 +93,7 @@ export const useUserStore = defineStore('user', {
                     this.initStore()
                 }
             }
-
+*/
             if (!this.followedAsds.includes(slug)) {
                 this.followedAsds.push(slug)
                 this.identities[slug] = {
@@ -155,6 +173,7 @@ export const useUserStore = defineStore('user', {
             localStorage.removeItem('user_auth')
         },
         */
+       /*
         setAuth(authData) {
             this.auth = authData
             const authCookie = useCookie('user_auth', {
@@ -162,8 +181,53 @@ export const useUserStore = defineStore('user', {
                 path: '/'
             })
             authCookie.value = authData
-            // Rimuoviamo il vecchio localStorage per pulizia
-            if (import.meta.client) localStorage.removeItem('user_auth')
+            
+            localStorage.removeItem('user_auth')
+        },
+        */
+
+        setAuth(permissions) {
+            this.auth = {
+                email: permissions.email,
+                is_admin: permissions.is_admin,
+                managed_asds: permissions.managed_asds
+            }
+            
+            // 1. Salviamo il cookie per la parte gestione
+            const authCookie = useCookie('user_auth', { maxAge: 60 * 60 * 24 * 7, path: '/' })
+            authCookie.value = this.auth
+
+            // 2. Popoliamo le IDENTITIES dallo storage (per i push e dati socio)
+            // Per ogni membership trovata, aggiorniamo il profilo socio
+            permissions.member_identities.forEach(m => {
+                this.identities[m.asd_slug] = {
+                email: m.email,
+                name: m.name,
+                expiry_date: m.expiry_date,
+                start_date: m.start_date,
+                role: 'MEMBER' // È un socio effettivo
+                }
+                if (!this.followedAsds.includes(m.asd_slug)) this.followedAsds.push(m.asd_slug)
+            })
+
+            // 3. Se è un MANAGER ma NON è socio di quell'ASD, creiamo comunque l'identità minima 
+            // per permettere il funzionamento dei push del manager
+            permissions.managed_asds.forEach(managed => {
+                if (!this.identities[managed.asd_slug]) {
+                this.identities[managed.asd_slug] = {
+                    email: permissions.email,
+                    name: permissions.name,
+                    role: 'MANAGER', // È solo manager, non socio
+                    expiry_date: null
+                }
+                if (!this.followedAsds.includes(managed.asd_slug)) this.followedAsds.push(managed.asd_slug)
+                } else {
+                // Se è sia socio che manager, manteniamo i dati socio ma aggiungiamo il flag manager se serve
+                this.identities[managed.asd_slug].is_manager = true
+                }
+            })
+
+            if (import.meta.client) this.saveToLocal()
         },
 
         // MODIFICA: Rimuovi il cookie

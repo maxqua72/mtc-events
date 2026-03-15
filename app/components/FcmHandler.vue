@@ -44,6 +44,7 @@ const syncToken = async () => {
   if (lastSyncedSlug.value !== asdSlug) {
     try {
       const token = await fcm.requestForToken()
+      console.log('[FCM] Token ricevuto dal plugin:', token)
       
       // syncToken viene chiamato sia da onMounted che dai watch, quindi è possibile che il token sia già stato sincronizzato per questa ASD.
       if (token && userStore.fcmToken !== token) {

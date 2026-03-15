@@ -18,6 +18,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
   ) {
     return
   }
+
+  // FORZA l'idratazione dello store sul client
+  if (import.meta.client && !userStore.isInitialized) {
+    userStore.initStore()
+  }
   
   // Estraiamo lo slug dai parametri della rotta
   // Assicurati che la cartella in pages si chiami [asd_slug]

@@ -27,6 +27,7 @@ const handleLogin = async () => {
 
     // Salva nello store [cite: 2026-02-07]
     userStore.setAuth(permissions) 
+    console.log('✅ Auth e Identities sincronizzate per il Manager');
 
     message.value = { type: 'success', text: 'Accesso eseguito.' }
 /*

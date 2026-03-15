@@ -97,6 +97,14 @@ export default defineNuxtConfig({
       skipWaiting: false,   // Impedisce l'aggiornamento automatico silente
       clientsClaim: true,   // Permette al nuovo SW di prendere il controllo subito dopo l'attivazione
       cleanupOutdatedCaches: true,
+      // Evita che workbox blocchi le icone e le api
+      //globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      runtimeCaching: [
+        {
+          urlPattern: /^\/api\/.*$/,
+          handler: 'NetworkOnly', // Non cercare in cache, vai sempre dritto al server
+        }
+      ],
 
       // firebase 
       importScripts: ['/firebase-messaging-sw.js']
@@ -109,6 +117,11 @@ export default defineNuxtConfig({
     devOptions: {
       enabled: true,
       type: 'module',
+    }
+  },
+  nitro: {
+    externals: {
+      inline: ['firebase-admin']
     }
   }
 })

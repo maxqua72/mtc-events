@@ -37,25 +37,28 @@ export default defineNuxtPlugin((nuxtApp) => {
       // 1. Registriamo manualmente la tua route dinamica
       // Usiamo un flag per evitare registrazioni multiple se vuoi, 
       // ma navigator.serviceWorker.register è già ottimizzato di suo.
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-        scope: '/firebase-cloud-messaging-push-scope' // Crea un contesto isolato
-      })
+      //const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        //scope: '/firebase-cloud-messaging-push-scope' // Crea un contesto isolato
+      //  scope: '/' // Crea un contesto isolato
+      //})
 
       // 2. ATTESA ATTIVAZIONE: Questo risolve il problema "no active Service Worker"
       // Aspettiamo che il worker passi allo stato 'activated'
-      await navigator.serviceWorker.ready
+      //await navigator.serviceWorker.ready
+      // 1. NON registrare manualmente. Usa la registrazione esistente del modulo PWA
+      const registration = await navigator.serviceWorker.ready
 
       // Un piccolo trucco extra: se il worker è appena stato installato, 
       // aspettiamo un istante che diventi attivo
       let serviceWorker = registration.active || registration.waiting || registration.installing
-
+/*
       // Se non è ancora attivo, implementiamo un piccolo loop di attesa
       while (registration.active?.state !== 'activated') {
         await new Promise(resolve => setTimeout(resolve, 100))
         // Uscita di sicurezza se il worker fallisce l'attivazione
         if (registration.installing?.state === 'redundant') throw new Error('SW Activation failed')
       }
-
+*/
       // 2. Chiediamo il token passando la registrazione appena creata
       const currentToken = await getToken(messaging, {
         vapidKey: config.vapidKey,
@@ -78,6 +81,35 @@ export default defineNuxtPlugin((nuxtApp) => {
     onMessage(messaging, (payload) => {
       console.log('Messaggio ricevuto in primo piano: ', payload)
       // Qui potresti mostrare un toast o un alert personalizzato nell'app
+
+      // Se abbiamo i permessi, forziamo il banner di sistema
+      if (Notification.permission === 'granted') {
+        const { title, body, icon } = payload.notification || {}
+
+        // Verifichiamo se il Service Worker è disponibile
+        if (!navigator.serviceWorker) {
+          console.error('[FCM] Service Worker non supportato dal browser')
+          return
+        }
+        
+        console.log('icon:', icon)
+        // Recuperiamo la registrazione del Service Worker per mostrare la notifica
+        navigator.serviceWorker.ready.then((registration) => {
+          console.log('[FCM] Service Worker pronto, mostro notifica...')
+          registration.showNotification(title || 'Nuova Notifica', {
+            body: body || '',
+            icon: icon || '/favicon.ico', // Assicurati di avere un'icona valida
+            badge: '/favicon.ico',        // Icona piccola per la barra di stato Android
+            data: payload.data,           // Importante per gestire il click e lo slug
+            tag: payload.messageId || Date.now().toString(),      // Raggruppa le notifiche simili
+            renotify: true,             // Forza la vibrazione/suono anche se il tag è uguale
+          }).catch(err => {
+          console.error('[FCM] Errore showNotification:', err)
+          })
+        }).catch(err => {
+          console.error('[FCM] Errore SW Ready:', err)
+        })
+      }
     })
   }
 
