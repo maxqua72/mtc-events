@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
       ? asd.logo_url 
       : `${baseUrl}${asd.logo_url}`
   }
-  asdLogo = 'https://cdn-icons-png.flaticon.com/512/190/190411.png'
+  //asdLogo = 'https://cdn-icons-png.flaticon.com/512/190/190411.png'
   console.log('ASD Logo URL:', asdLogo)
 
   // 1. Recuperiamo la membership per avere i token
@@ -47,12 +47,22 @@ export default defineEventHandler(async (event) => {
     notification: {
       title: title || 'Notifica ASD',
       body: messageBody || 'Messaggio di test',
-      //icon: asdLogo // URL assoluto necessario qui
+    },
+    // CONFIGURAZIONE SPECIFICA PER WEB (Browser)
+    webpush: {
+        notification: {
+            icon: asdLogo,      // Qui è dove Firebase Admin cerca l'icona per i browser
+            badge: asdLogo,     // L'iconcina nella barra di stato (Android)
+            requireInteraction: true // Opzionale: la notifica non sparisce finché non clicchi
+        },
+        fcmOptions: {
+            link: `${baseUrl}/${slug}/events` // URL dove andare al click (gestito nativamente da FCM)
+        }
     },
     // Dati extra utili per la logica dell'app
     data: {
       asd_slug: slug,
-      //asd_logo: asdLogo, // URL assoluto necessario qui per il plugin
+      asd_logo: asdLogo, // URL assoluto necessario qui per il plugin
       click_action: `/${slug}/events` 
     }
   }))
