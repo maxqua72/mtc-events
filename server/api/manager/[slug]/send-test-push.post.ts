@@ -1,6 +1,11 @@
 
 export default defineEventHandler(async (event) => {
-  const { slug } = event.context.params
+  //const { slug } = event.context.params
+  const slug = getRouterParam(event, 'slug') // Restituisce string | undefined
+
+  if (!slug) {
+    throw createError({ statusCode: 400, message: 'Slug mancante' })
+  }
   const body = await readBody(event)
   const { email, title, body: messageBody } = body
 
@@ -10,25 +15,30 @@ export default defineEventHandler(async (event) => {
   const baseUrl = `${protocol}://${host}`
 
   console.log('Base URL determinato:', baseUrl)
+  console.log('ASD :', slug)
 
   const db = await getDb()
 
   // 2. Recuperiamo l'ASD per il logo
   const asd = await db.collection('associations').findOne({ slug: slug })
 
+  if (!asd) {
+    throw createError({ statusCode: 404, message: 'ASD non trovata' })
+  }
+
   // 3. Costruiamo l'URL assoluto del logo
   let asdLogo = `${baseUrl}/favicon.ico` // Fallback
   if (asd?.logo_url) {
     // Se inizia con / lo incolliamo al baseUrl, altrimenti lo usiamo così com'è
-    asdLogo = asd.logo_url.startsWith('http') 
-      ? asd.logo_url 
+    asdLogo = asd.logo_url.startsWith('http')
+      ? asd.logo_url
       : `${baseUrl}${asd.logo_url}`
   }
   //asdLogo = 'https://cdn-icons-png.flaticon.com/512/190/190411.png'
   console.log('ASD Logo URL:', asdLogo)
 
   // 1. Recuperiamo la membership per avere i token
-  const membership = await db.collection('memberships').findOne({ 
+  const membership = await db.collection('memberships').findOne({
     email: email.toLowerCase(),
     association_id: asd._id
   })
@@ -42,7 +52,7 @@ export default defineEventHandler(async (event) => {
 
   // 2. Prepariamo il messaggio per Firebase
   // Inviamo a tutti i token registrati (es. telefono e desktop)
-  const messages = membership.fcm_tokens.map(token => ({
+  const messages = membership.fcm_tokens.map((token: string) => ({
     token,
     notification: {
       title: title || 'Notifica ASD',
@@ -50,20 +60,20 @@ export default defineEventHandler(async (event) => {
     },
     // CONFIGURAZIONE SPECIFICA PER WEB (Browser)
     webpush: {
-        notification: {
-            icon: asdLogo,      // Qui è dove Firebase Admin cerca l'icona per i browser
-            badge: asdLogo,     // L'iconcina nella barra di stato (Android)
-            requireInteraction: true // Opzionale: la notifica non sparisce finché non clicchi
-        },
-        fcmOptions: {
-            link: `${baseUrl}/${slug}/events` // URL dove andare al click (gestito nativamente da FCM)
-        }
+      notification: {
+        icon: asdLogo,      // Qui è dove Firebase Admin cerca l'icona per i browser
+        badge: asdLogo,     // L'iconcina nella barra di stato (Android)
+        requireInteraction: true // Opzionale: la notifica non sparisce finché non clicchi
+      },
+      fcmOptions: {
+        link: `${baseUrl}/${slug}/events` // URL dove andare al click (gestito nativamente da FCM)
+      }
     },
     // Dati extra utili per la logica dell'app
     data: {
       asd_slug: slug,
       asd_logo: asdLogo, // URL assoluto necessario qui per il plugin
-      click_action: `/${slug}/events` 
+      click_action: `/${slug}/events`
     }
   }))
 
@@ -76,15 +86,15 @@ export default defineEventHandler(async (event) => {
     const response = await fbMessaging.sendEach(messages)
 
     console.log('Risposta invio FCM:', response)
-    if(response.responses[0].error){
-        console.log('Dettaglio Errore FCM:', JSON.stringify(response.responses[0].error, null, 2))
+    if (response.responses?.[0]?.error) {
+      console.log('Dettaglio Errore FCM:', JSON.stringify(response.responses[0].error, null, 2))
     }
-    
-    
-    return { 
-      success: true, 
-      sentCount: response.successCount, 
-      failureCount: response.failureCount 
+
+
+    return {
+      success: true,
+      sentCount: response.successCount,
+      failureCount: response.failureCount
     }
   } catch (error) {
     console.error('Errore invio FCM:', error)
