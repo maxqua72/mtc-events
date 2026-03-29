@@ -1,0 +1,30 @@
+{
+  "dependencies": {
+    "vue": "latest",
+    "vue-bundle-renderer": "latest",
+    "devalue": "latest",
+    "unhead": "latest",
+    "@unhead/vue": "latest",
+    "vue-router": "latest",
+    "@vue/shared": "latest",
+    "h3": "latest",
+    "ufo": "latest",
+    "defu": "latest",
+    "radix3": "latest",
+    "cookie-es": "latest",
+    "consola": "latest",
+    "destr": "latest",
+    "ipx": "latest",
+    "iron-webcrypto": "latest",
+    "@iconify/vue": "latest",
+    "@iconify/utils": "latest",
+    "pinia": "latest",
+    "@pinia/nuxt": "latest",
+    "firebase-admin": "^13.7.0",
+    "mongodb": "^7.1.0",
+    "resend": "latest",
+    "sharp": "latest",
+    "protobufjs": "^7.2.4",
+    "mongodb-connection-string-url": "latest"
+  }
+}

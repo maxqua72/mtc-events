@@ -38,7 +38,7 @@ export default defineNuxtConfig({
         vapidKey: process.env.NUXT_PUBLIC_FIREBASE_VAPID_KEY
       }
     }
-    
+
   },
   css: ['@/assets/css/main.css'],
   pwa: {
@@ -88,12 +88,12 @@ export default defineNuxtConfig({
           url: "/join?t=%s"
         }
       ],
-      
+
     },
     workbox: {
       navigateFallback: '/',
       // Opzionale: evita che le API vengano intercettate dal fallback
-      navigateFallbackDenylist: [/^\/api/], 
+      navigateFallbackDenylist: [/^\/api/],
       skipWaiting: false,   // Impedisce l'aggiornamento automatico silente
       clientsClaim: true,   // Permette al nuovo SW di prendere il controllo subito dopo l'attivazione
       cleanupOutdatedCaches: true,
@@ -120,8 +120,35 @@ export default defineNuxtConfig({
     }
   },
   nitro: {
+    // Forza Nitro a includere queste librerie direttamente nel bundle index.mjs
+    // Invece di cercarle nella cartella node_modules del server
+    experimental: {
+      openAPI: false // opzionale, per snellire
+    },
     externals: {
-      inline: ['firebase-admin']
+      inline: [
+        'firebase-admin',
+        '@google-cloud/firestore',
+        '@iconify/utils',
+        'mongodb',
+        'bson',
+        'mongodb-connection-string-url',
+        '@mongodb-js/saslprep',
+        'resend',      
+        'date-fns'     
+      ]
     }
+  },
+  // Importante per le icone: forziamo il build locale
+
+  build: {
+    transpile: [
+      'firebase-admin',
+      '@google-cloud/firestore',
+      'google-gax',
+      '@iconify/utils',
+      'mongodb',
+      'resend'        
+    ]
   }
 })

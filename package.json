@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
+    "postbuild": "powershell \"If (Test-Path build.zip) { Remove-Item build.zip }; Compress-Archive -Path .output, mtc-events-deps.json -DestinationPath build.zip -Force -CompressionLevel Optimal\"",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
