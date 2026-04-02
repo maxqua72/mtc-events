@@ -81,7 +81,7 @@ definePageMeta({ layout: 'default' })
 
                     <div v-if="circuitLogo" class="shrink-0">
                         <div
-                            class="h-10 w-10 md:h-12 md:w-12 bg-white rounded-full shadow-xl flex items-center justify-center p-2 overflow-hidden">
+                            class="h-10 w-10 md:h-12 md:w-12 bg-white rounded-full shadow-xl flex items-center justify-center overflow-hidden">
                             <img :src="circuitLogo" class="max-w-full max-h-full object-contain" alt="Logo Circuito" />
                         </div>
                     </div>
@@ -152,7 +152,7 @@ definePageMeta({ layout: 'default' })
             </div>
 
             <div class="space-y-4">
-                <div class="bg-chess-dark sm:p-8 md:p-8 lg:p-6 xl:p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
+                <div class="bg-chess-dark p-8 sm:p-8 md:p-8 lg:p-6 xl:p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
 
                     <div class="space-y-6 relative z-10">
                         <div>

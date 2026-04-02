@@ -2,7 +2,7 @@
   <header
     class="w-full h-16 bg-chess-dark text-white border-b border-white/10 sticky top-0 z-50 px-4 md:px-8 flex items-center justify-between shadow-lg">
     <div class="flex items-center gap-4 relative">
-      <div class="w-9 h-9 rounded bg-white/50 border border-white/5 flex items-center justify-center overflow-hidden">
+      <div class="w-9 h-9 rounded flex items-center justify-center overflow-hidden">
         <img v-if="info?.logo_url" :src="info.logo_url" class="w-full h-full object-contain" />
         <Icon v-else name="fa6-solid:chess-knight" class="text-chess-gold text-lg" />
       </div>

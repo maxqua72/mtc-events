@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-chess-dark flex flex-col items-center justify-center p-6 text-center">
     
     <div class="flex flex-col items-center">
-      <div class="relative w-36 h-36 md:w-48 md:h-48 rounded-full flex items-center justify-center p-2 mb-10 shadow-[0_0_50px_rgba(0,0,0,0.3)]"
+      <div class="relative w-36 h-36 md:w-48 md:h-48 rounded-full flex items-center justify-center p-1 mb-10 shadow-[0_0_50px_rgba(0,0,0,0.3)]"
         :style="{ backgroundColor: asdStore.info?.theme_color || '#ffffff' }">
         
         <div class="absolute inset-0 rounded-full bg-chess-gold/20 blur-2xl -z-10 animate-pulse"></div>

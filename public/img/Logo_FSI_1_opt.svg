@@ -11,16 +11,16 @@
   </rdf:RDF>
  </metadata>
  <g transform="translate(31.627 -44.767)">
-  <g>
-   <g transform="translate(184.94 6.35)">
+  <g transform="translate(.26458 16.933)">
+   <g transform="translate(184.68 -10.583)">
     <rect transform="rotate(-45)" x="-250.07" y="-56.424" width="139.53" height="139.53" rx=".56605" ry=".28304" fill="#00a651" style="paint-order:stroke fill markers"/>
     <rect transform="rotate(-45)" x="-199.55" y="-5.9087" width="139.53" height="139.53" rx=".56605" ry=".28304" fill="#ed1c24" style="paint-order:stroke fill markers"/>
     <rect transform="rotate(-45)" x="-223.46" y="-29.818" width="139.53" height="139.53" rx=".56605" ry=".28304" fill="#fff" style="paint-order:stroke fill markers"/>
    </g>
-   <g transform="translate(7.1916 .44417)" fill="#000000" font-family="sans-serif" font-size="72.023px" letter-spacing="0px" stroke-width="1.8006" word-spacing="0px">
-    <text x="-11.634942" y="193.69907" stroke="#ffffff" style="line-height:1.25" xml:space="preserve"><tspan x="-11.634942" y="193.69907" font-family="'Times New Roman'" font-size="153.65px" stroke="#ffffff" stroke-width="1.8006">F</tspan></text>
-    <text x="68.55291" y="193.69907" style="line-height:1.25" xml:space="preserve"><tspan x="68.55291" y="193.69907" font-family="'Times New Roman'" font-size="153.65px" stroke-width="1.8006">S</tspan></text>
-    <text x="152.56697" y="193.69907" stroke="#ffffff" style="line-height:1.25" xml:space="preserve"><tspan x="152.56697" y="193.69907" font-family="'Times New Roman'" font-size="153.65px" stroke="#ffffff" stroke-width="1.8006">I</tspan></text>
+   <g transform="translate(0 -3.4726)" fill="#000000" font-family="sans-serif" font-size="28.378px" letter-spacing="0px" stroke-width=".70946" word-spacing="0px">
+    <text x="86.257355" y="102.26666" style="line-height:1.25" xml:space="preserve"><tspan x="86.257355" y="102.26666" font-family="'Times New Roman'" font-size="60.54px" stroke-width=".70946">F</tspan></text>
+    <text x="92.243408" y="197.45053" style="line-height:1.25" xml:space="preserve"><tspan x="92.243408" y="197.45053" font-family="'Times New Roman'" font-size="60.54px" stroke-width=".70946">I</tspan></text>
+    <text x="85.237511" y="149.03177" style="line-height:1.25" xml:space="preserve"><tspan x="85.237511" y="149.03177" font-family="'Times New Roman'" font-size="60.54px" stroke-width=".70946">S</tspan></text>
    </g>
   </g>
  </g>
