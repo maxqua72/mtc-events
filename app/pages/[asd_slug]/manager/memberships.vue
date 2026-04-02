@@ -142,7 +142,6 @@ const sendTestPush = async (member) => {
           <tr>
             <th class="p-4 text-[10px] font-black uppercase text-gray-400">Socio</th>
             <th class="p-4 text-[10px] font-black uppercase text-gray-400">email</th>
-            <th class="p-4 text-[10px] font-black uppercase text-gray-400">Codice</th>
             <th class="p-4 text-[10px] font-black uppercase text-gray-400">Scadenza</th>
             <th class="p-4 text-[10px] font-black uppercase text-gray-400">Stato</th>
             <th class="p-4"></th>
@@ -154,7 +153,7 @@ const sendTestPush = async (member) => {
               <p class="font-bold text-chess-dark">{{ m.name }}</p>
             </td>
             <td class="py-2 px-4 font-mono text-xs text-chess-chocolate">{{ m.email || 'Nessuna email' }}</td>
-            <td class="py-2 px-4 font-mono text-xs text-chess-chocolate">{{ m.member_code }}</td>
+            
             <td class="py-2 px-4 text-xs font-bold">{{ new Date(m.expiry_date).toLocaleDateString() }}</td>
             <td class="py-2 px-4">
               <span class="px-2 py-1 rounded text-[9px] font-black uppercase"

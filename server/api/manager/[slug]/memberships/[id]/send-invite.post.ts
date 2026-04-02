@@ -60,13 +60,13 @@ export default defineEventHandler(async (event) => {
   // 5. Preparazione email per la coda
   const emailData = {
     recipient: (isDev && process.env.RESEND_TEST_RECIPIENT) ? process.env.RESEND_TEST_RECIPIENT : membership.email,
-    from: isDev ? 'MTC Events <onboarding@resend.dev>' : `"${asd.name}" <inviti@soci.mtc-events.it>`,
-    subject: `Benvenuto in ${asd.name} - Attiva la tua tessera`,
+    from: isDev ? 'MTC Events <onboarding@resend.dev>' : `"${asd.name}" <invito@events.mindthecheck.com>`,
+    subject: `Benvenuto in ${asd.name} - Attiva la tua app`,
     body_html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
           <h2 style="color: #2563eb;">Ciao ${membership.name}!</h2>
-          <p>L'associazione <b>${asd.name}</b> ti ha invitato a unirti alla loro community su MTC Events.</p>
-          <p>Per completare la tua iscrizione e attivare la tua tessera digitale, clicca sul pulsante qui sotto:</p>
+          <p>L'associazione <b>${asd.name}</b> ti ha invitato a unirti alla loro community su MintTheCheck Events.</p>
+          <p>Per completare la tua iscrizione e vedere tutti gli eventi dell'associazione, clicca sul pulsante qui sotto:</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${joinLink}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
               Attiva la mia Membership

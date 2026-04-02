@@ -137,39 +137,53 @@ const uiTexts = computed(() => {
 
 <template>
     <div class="space-y-6 pb-20">
-        <div
-            class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm sticky top-[64px] z-40">
-            <div>
-                <h2 class="text-xl font-black text-chess-dark uppercase tracking-tight">
-                    {{ uiTexts.title }}
-                </h2>
-                <p class="text-xs text-gray-500 mt-1">{{ uiTexts.subtitle }}
-                </p>
-            </div>
 
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                    <span class="text-[9px] font-black uppercase tracking-widest"
-                        :class="form.is_published ? 'text-green-600' : 'text-amber-500'">
-                        {{ form.is_published ? 'Pubblicato' : 'In Bozza' }}
-                    </span>
-                    <button @click="form.is_published = !form.is_published"
-                        class="relative inline-flex h-5 w-10 items-center rounded-full transition-colors"
-                        :class="form.is_published ? 'bg-green-600' : 'bg-gray-300'">
-                        <span class="h-3 w-3 transform rounded-full bg-white transition-transform"
-                            :class="form.is_published ? 'translate-x-6' : 'translate-x-1'" />
-                    </button>
+        <div class="bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm sticky top-[64px] z-40">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+
+                <div class="w-full sm:w-auto">
+                    <h2 class="text-lg md:text-xl font-black text-chess-dark uppercase tracking-tight">
+                        {{ uiTexts.title }}
+                    </h2>
+                    <p class="text-[10px] text-xs text-gray-500 mt-1">
+                        {{ uiTexts.subtitle }}
+                    </p>
                 </div>
-                
 
-                <button @click="$emit('cancel')"
-                    class="text-[11px] font-bold text-gray-400 uppercase hover:text-gray-600 transition-colors">Annulla</button>
-                <button @click="submitForm"
-                    class="bg-chess-dark text-chess-gold px-6 py-3 rounded-lg text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg">
-                    {{ uiTexts.saveLabel }}
-                </button>
+                <div
+                    class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-0 border-gray-100">
+
+                    <div
+                        class="flex items-center justify-between sm:justify-start gap-2 bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-200 w-full sm:w-auto">
+                        <span class="text-[9px] font-black uppercase tracking-widest"
+                            :class="form.is_published ? 'text-green-600' : 'text-amber-500'">
+                            {{ form.is_published ? 'Pubblicato' : 'In Bozza' }}
+                        </span>
+                        <button @click="form.is_published = !form.is_published"
+                            class="relative inline-flex h-5 w-10 items-center rounded-full transition-colors"
+                            :class="form.is_published ? 'bg-green-600' : 'bg-gray-300'">
+                            <span class="h-3 w-3 transform rounded-full bg-white transition-transform"
+                                :class="form.is_published ? 'translate-x-6' : 'translate-x-1'" />
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                        <button @click="$emit('cancel')"
+                            class="text-[11px] font-bold text-gray-400 uppercase hover:text-gray-600 transition-colors px-2">
+                            Annulla
+                        </button>
+
+                        <button @click="submitForm"
+                            class="bg-chess-dark text-chess-gold px-6 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg sm:w-auto">
+                            {{ uiTexts.saveLabel }}
+                        </button>
+                    </div>
+                </div>
+
+
             </div>
         </div>
+
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

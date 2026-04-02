@@ -94,16 +94,16 @@ const handleRegenerate = async () => {
             <input v-model="form.name" type="text" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-chess-gold" />
           </div>
 
-          <div class="space-y-2">
+          <div class="md:col-span-2 space-y-2">
             <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Email (Opzionale)</label>
             <input v-model="form.email" type="email" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-bold outline-none" placeholder="Genitore o Personale" />
           </div>
-
+<!--
           <div class="space-y-2">
             <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Codice Tessera</label>
             <input v-model="form.member_code" type="text" placeholder="TESS-2026-..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-bold outline-none" />
           </div>
-
+-->
           <div class="space-y-2">
             <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Data Inizio</label>
             <input v-model="form.start_date" type="date" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-bold outline-none" />
