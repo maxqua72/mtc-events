@@ -1,6 +1,6 @@
 <template>
   <Transition name="update-slide">
-    <div v-if="$pwa !== undefined && $pwa.needRefresh" 
+    <div v-if="showBanner" 
          class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000] w-[90%] max-w-sm bg-chess-iron border border-chess-gold/30 p-5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col gap-4 backdrop-blur-xl">
       
       <div class="flex items-start gap-4">
@@ -32,10 +32,31 @@
 <script setup>
 const { $pwa } = useNuxtApp()
 
+
+const isInstalled = ref(false)
+
+onMounted(() => {
+  // Verifichiamo se siamo in modalità PWA
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                      || window.navigator.standalone 
+                      || document.referrer.includes('android-app://');
+  
+  isInstalled.value = isStandalone;
+
+  // DEBUG: Decommenta la riga sotto per forzare la visualizzazione anche nel browser normale
+  // isInstalled.value = true; 
+
+  console.log(isStandalone ? 'App in modalità PWA' : 'App in modalità Browser')
+})
+
 // Creiamo un riferimento che sarà vero solo sul client e se pwa è definito
 const showBanner = computed(() => {
+  // Verifica lato server
   if (import.meta.server) return false
-  return $pwa && $pwa.needRefresh
+  
+  // Verifica esistenza plugin e necessità di refresh
+  // Usiamo l'accesso diretto a $pwa che abbiamo estratto sopra
+  return !!($pwa && $pwa.needRefresh && isInstalled.value)
 })
 </script>
 

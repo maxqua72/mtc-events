@@ -1,5 +1,6 @@
 <script setup>
 const route = useRoute()
+const { searchQuery } = useSearch()
 
 definePageMeta({ layout: 'default' })
 
@@ -11,21 +12,44 @@ const filters = [
   { label: 'Corsi', value: 'corso' },
   { label: 'Altro', value: 'altro' }
 ]
-
+/*
 const filteredEvents = computed(() => {
   if (!events.value) return []
   return activeFilter.value === 'all' 
     ? events.value 
     : events.value.filter(e => e.category?.toLowerCase() === activeFilter.value)
 })
+*/
 
 const { data: events } = await useFetch(`/api/asd/${route.params.asd_slug}/events`)
 
+const filteredEvents = computed(() => {
+  if (!events.value) return []
+  
+  return events.value.filter(e => {
+    // Filtro per categoria
+    const matchesCategory = activeFilter.value === 'all' || e.category?.toLowerCase() === activeFilter.value
+    
+    // Filtro per testo (searchQuery)
+    // Se la query è vuota o corta, non filtra nulla per testo
+    const searchTerm = searchQuery.value.toLowerCase()
+    const matchesSearch = searchTerm.length < 2 || 
+                         e.title?.toLowerCase().includes(searchTerm) || 
+                         e.category?.toLowerCase().includes(searchTerm)
+
+    return matchesCategory && matchesSearch
+  })
+})
 
 </script>
 
 <template>
   <div class="space-y-4">
+
+    <div v-if="searchQuery.length >= 2" class="text-xs font-bold text-chess-gold uppercase tracking-widest px-1">
+      Filtrando per: "{{ searchQuery }}"
+    </div>
+
     <EventFilters 
       v-model="activeFilter" 
       :filters="filters" 
@@ -45,6 +69,11 @@ const { data: events } = await useFetch(`/api/asd/${route.params.asd_slug}/event
         <Icon name="fa6-solid:chess-pawn" class="text-gray-300" size="30" />
       </div>
       <p class="text-gray-400 font-medium italic">Nessun evento in programma.</p>
+
+      
     </div>
+    <button v-if="searchQuery.length >= 2" @click="searchQuery = ''" class="mt-2 text-chess-gold text-sm font-bold">
+        Pulisci ricerca
+      </button>
   </div>
 </template>

@@ -1,6 +1,6 @@
 <template>
   <aside class="hidden md:block w-64 bg-chess-iron border-r border-gray-600/20 shadow-sm">
-    <div class="sticky top-16 p-6 h-[calc(100vh-16px)] flex flex-col">
+    <div class="sticky top-16 p-6 h-[calc(100vh-64px)] flex flex-col">
       <nav class="flex-1 space-y-8">
 
         <div v-if="isAdmin">
@@ -52,6 +52,11 @@
           {{ isAdmin ? 'Admin Mode' : 'Manager Mode' }}
         </span>
       </div>
+
+      <div class="pl-9">
+           <AppVersion />
+        </div>
+
     </div>
   </aside>
 </template>

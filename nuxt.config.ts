@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-console.log('DEBUG ENV:', process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID)
+import pkg from './package.json'
+
 export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
@@ -28,6 +29,7 @@ export default defineNuxtConfig({
     firebaseServiceAccount: process.env.FIREBASE_SERVICE_ACCOUNT,
 
     public: {
+      version: pkg.version, // Rende la versione dell'app accessibile anche lato client
       // Variabili accessibili anche lato client (per ricevere notifiche)
       firebase: {
         apiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY,
@@ -43,8 +45,8 @@ export default defineNuxtConfig({
   css: ['@/assets/css/main.css'],
   pwa: {
     disable: process.dev, // Disabilita PWA in sviluppo per evitare cache aggressive
-    //registerType: 'autoUpdate', -- aggiorna senza avvertire l'utente (non ideale per app con dati dinamici come la nostra)
-    registerType: 'prompt',
+    registerType: 'autoUpdate', //-- aggiorna senza avvertire l'utente (non ideale per app con dati dinamici come la nostra)
+    //registerType: 'prompt',
     manifest: {
       id: '/',
       name: 'MTC Events',

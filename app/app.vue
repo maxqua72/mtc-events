@@ -21,7 +21,7 @@ useHead({
       <NuxtPage />
     </NuxtLayout>
     <ClientOnly>
-      <PwaUpdateBanner />
+      <!-- <PwaUpdateBanner /> -->
       <FcmHandler />
     </ClientOnly>
     

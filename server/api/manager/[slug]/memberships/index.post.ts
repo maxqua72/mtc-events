@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
   // Dati che vengono sempre aggiornati (o impostati)
   const updateData = {
     name: body.name,
+    surname: body.surname,
     email: body.email?.toLowerCase().trim(),
     member_code: finalMemberCode,
     start_date: new Date(body.start_date),

@@ -1,6 +1,7 @@
 {
   "name": "mtc-events",
   "type": "module",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "build": "nuxt build",
@@ -20,11 +21,13 @@
     "firebase-admin": "^13.7.0",
     "mongodb": "^7.1.0",
     "nuxt": "^4.3.0",
+    "qrcode": "^1.5.4",
     "resend": "^6.9.4",
     "vue": "^3.5.27",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.6",
     "@vite-pwa/nuxt": "^1.1.1"
   }
 }

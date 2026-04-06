@@ -13,13 +13,35 @@
       <main class="flex-1 px-4 pb-4 pt-4 md:p-10 max-w-7xl mx-auto w-full">
         <div class="md:hidden mb-2">
           <div class="relative">
-            <Icon name="fa6-solid:magnifying-glass" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input type="text" placeholder="Cerca eventi o soci..."
+            <Icon 
+              :name="isSearching ? 'fa6-solid:circle-notch' : 'fa6-solid:magnifying-glass'" 
+              :class="['absolute left-4 top-1/2 -translate-y-1/2 text-gray-400', { 'animate-spin': isSearching }]" 
+            />
+            <input 
+              v-model="searchQuery"
+              type="text" :placeholder="searchPlaceholder"
               class="w-full bg-white border border-gray-200 rounded-xl px-11 py-3 text-sm shadow-sm focus:border-chess-gold focus:ring-0 outline-none">
           </div>
         </div>
 
-        <slot />
+        <template v-if="searchQuery.length >= 2 && searchContext === 'GLOBAL'">
+          <div class="mb-8 flex items-center justify-between border-b border-gray-200 pb-4">
+            <div>
+              <h2 class="text-2xl font-black uppercase tracking-tighter">Ricerca <span class="text-chess-gold">Globale</span></h2>
+              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Risultati per: {{ searchQuery }}</p>
+            </div>
+            <button @click="searchQuery = ''" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors">
+              <Icon name="fa6-solid:xmark" size="16" />
+            </button>
+          </div>
+          
+          <SearchResults 
+            :results="results" 
+            :slug="route.params.asd_slug" 
+          />
+        </template>
+
+        <slot v-else />
       </main>
     </div>
 
@@ -29,6 +51,9 @@
 
 <script setup>
 import { useAsdStore } from '~/stores/asd'
+
+const { searchQuery, executeSearch, results, isSearching, searchContext } = useSearch()
+
 const asdStore = useAsdStore()
 const userStore = useUserStore()
 const route = useRoute()
@@ -45,6 +70,26 @@ const isManager = computed(() => {
   // Altrimenti controlliamo se lo slug attuale è nella sua lista di gestione
   const currentSlug = route.params.asd_slug
   return auth.managed_asds?.some(asd => asd.asd_slug === currentSlug)
+})
+
+// 2. Osserviamo la query di ricerca: quando cambia, eseguiamo la chiamata
+watch(searchQuery, (newQuery) => {
+  const slug = route.params.asd_slug
+  if (slug && searchContext.value === 'GLOBAL') {
+    executeSearch(slug)
+  }
+})
+
+watch(() => route.fullPath, () => {
+  // Reset query solo DOPO che la navigazione è completata
+  searchQuery.value = ''
+})
+
+// 3. Determiniamo il placeholder in base al contesto
+const searchPlaceholder = computed(() => {
+  if (searchContext.value === 'EVENTS') return 'Cerca negli eventi...'
+  if (searchContext.value === 'MEMBERS') return 'Cerca tra i soci...'
+  return 'Cerca nel club...'
 })
 </script>
 

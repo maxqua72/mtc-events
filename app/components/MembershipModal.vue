@@ -9,6 +9,7 @@ const emit = defineEmits(['close', 'save'])
 const isSubmitting = ref(false)
 
 const form = ref({
+  surname: '',
   name: '',
   email: '',
   member_code: '',
@@ -89,8 +90,13 @@ const handleRegenerate = async () => {
 
       <form @submit.prevent="submit" class="p-8 space-y-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div class="md:col-span-2 space-y-2">
-            <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Nome Completo</label>
+          <div class="space-y-2">
+            <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Cognome</label>
+            <input v-model="form.surname" type="text" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-chess-gold" />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Nome</label>
             <input v-model="form.name" type="text" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-chess-gold" />
           </div>
 

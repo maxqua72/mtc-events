@@ -41,7 +41,9 @@
       <div class="relative">
         <Icon name="fa6-solid:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
           size="14" />
-        <input type="text" placeholder="Cerca nel club..."
+        <input 
+          v-model="searchQuery"
+          type="text" placeholder="Cerca nel club..."
           class="w-full bg-white/5 border border-white/10 rounded-md py-1.5 pl-10 text-xs text-white focus:bg-white/10 focus:border-chess-gold outline-none transition-all">
       </div>
     </div>
@@ -83,6 +85,14 @@
 </template>
 
 <script setup>
+const { searchQuery, executeSearch } = useSearch()
+const route = useRoute()
+// Esegui la ricerca quando l'utente scrive (con un piccolo debounce)
+watch(searchQuery, () => {
+  const slug = route.params.asd_slug
+  if (slug) executeSearch(slug, props.isManager)
+})
+
 const props = defineProps({
   info: Object,
   isManager: Boolean

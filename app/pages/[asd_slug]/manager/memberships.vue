@@ -18,6 +18,14 @@ const openModal = (member = null) => {
   showModal.value = true
 }
 
+const showPushModal = ref(false)
+const memberForPush = ref(null)
+
+const openPushModal = (member) => {
+  memberForPush.value = member
+  showPushModal.value = true
+}
+
 const deleteMember = async (id) => {
   if (confirm('Rimuovere definitivamente questo socio?')) {
     await $fetch(`/api/manager/${asd_slug}/memberships/${id}`, { method: 'DELETE' })
@@ -48,12 +56,12 @@ const sendJoinLink = async (member, force = false) => {
       let message = '';
       if (res.reason === 'monthly') {
         message = `⚠️ LIMITE MENSILE RAGGIUNTO (${res.monthlySent}/${res.monthlyLimit}).\n\n` +
-                  `L'invito potrà essere inviato solo all'inizio del mese prossimo.\n` +
-                  `Vuoi comunque metterlo in coda?`;
+          `L'invito potrà essere inviato solo all'inizio del mese prossimo.\n` +
+          `Vuoi comunque metterlo in coda?`;
       } else {
         message = `📅 LIMITE GIORNALIERO RAGGIUNTO (${res.dailySent}/${res.dailyLimit}).\n\n` +
-                  `L'invito verrà inviato automaticamente domani mattina.\n` +
-                  `Vuoi metterlo in coda?`;
+          `L'invito verrà inviato automaticamente domani mattina.\n` +
+          `Vuoi metterlo in coda?`;
       }
 
       const userChoice = confirm(message);
@@ -106,6 +114,7 @@ const sendJoinLink = async (member) => {
 }*/
 
 // Funzione per inviare una notifica Push di test
+/*
 const sendTestPush = async (member) => {
   const message = prompt("Inserisci un messaggio per la notifica di test:", "Ciao " + member.name + "!");
   if (!message) return;
@@ -124,6 +133,7 @@ const sendTestPush = async (member) => {
     alert('Errore nell\'invio della notifica')
   }
 }
+  */
 </script>
 
 <template>
@@ -150,10 +160,10 @@ const sendTestPush = async (member) => {
         <tbody class="divide-y divide-gray-50">
           <tr v-for="m in members || []" :key="m._id" class="hover:bg-gray-50 transition-colors">
             <td class="py-2 px-4">
-              <p class="font-bold text-chess-dark">{{ m.name }}</p>
+              <p class="font-bold text-chess-dark">{{ m.surname }} {{ m.name }}</p>
             </td>
             <td class="py-2 px-4 font-mono text-xs text-chess-chocolate">{{ m.email || 'Nessuna email' }}</td>
-            
+
             <td class="py-2 px-4 text-xs font-bold">{{ new Date(m.expiry_date).toLocaleDateString() }}</td>
             <td class="py-2 px-4">
               <span class="px-2 py-1 rounded text-[9px] font-black uppercase"
@@ -178,10 +188,15 @@ const sendTestPush = async (member) => {
                   <Icon :name="isSending === m._id ? 'svg-spinners:ring-resize' : 'fa6-solid:envelope-open-text'"
                     class="text-lg" />
                 </button>
-
+<!--
                 <button v-if="m.fcm_tokens?.length" @click="sendTestPush(m)" title="Invia Push di test"
                   class="text-gray-400 hover:text-orange-500 transition-colors">
                   <Icon name="fa6-solid:bell" />
+                </button>
+                -->
+                <button v-if="m.fcm_tokens?.length" @click="openPushModal(m)" title="Invia Notifica Push"
+                  class="text-gray-400 hover:text-orange-500 transition-colors p-1.5 rounded-lg hover:bg-orange-50">
+                  <Icon name="fa6-solid:bell" class="text-lg" />
                 </button>
 
                 <button @click="openModal(m)" class="text-gray-400 hover:text-chess-gold">
@@ -200,6 +215,10 @@ const sendTestPush = async (member) => {
     <Teleport to="body">
       <MembershipModal v-if="showModal" :membership="selectedMember" :asdId="asd?._id" :asdSlug="asd_slug"
         @close="showModal = false" @save="refresh(); showModal = false" />
+      
+      <PushNotificationModal v-if="showPushModal" :member="memberForPush" :asdSlug="asd_slug"
+        @close="showPushModal = false" />
+    
     </Teleport>
   </div>
 </template>

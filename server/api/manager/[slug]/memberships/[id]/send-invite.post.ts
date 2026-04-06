@@ -1,5 +1,6 @@
 // server/api/manager/[slug]/memberships/[id]/send-invite.post.ts
 import { ObjectId } from 'mongodb'
+import QRCode from 'qrcode'
 
 export default defineEventHandler(async (event) => {
   // Nota: params è dentro event.context, ma assicuriamoci di tipizzarlo bene
@@ -42,6 +43,8 @@ export default defineEventHandler(async (event) => {
   const host = getRequestHost(event)
   const joinLink = `${protocol}://${host}/${slug}/join?t=${membership.join_token}`
 
+  
+
   // 4. Calcolo data di schedulazione
   // Se la quota è piena, programmiamo per l'inizio del giorno successivo
   const now = new Date()
@@ -57,6 +60,10 @@ export default defineEventHandler(async (event) => {
     scheduledAt.setHours(9, 0, 0, 0);
   }
 
+  // GENERA IL QR CODE
+  // Questo è l'URL della tua nuova API "immagine"
+  const qrImageUrl = `${protocol}://${host}/api/qr/${membership.join_token}?slug=${slug}`
+
   // 5. Preparazione email per la coda
   const emailData = {
     recipient: (isDev && process.env.RESEND_TEST_RECIPIENT) ? process.env.RESEND_TEST_RECIPIENT : membership.email,
@@ -66,11 +73,18 @@ export default defineEventHandler(async (event) => {
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
           <h2 style="color: #2563eb;">Ciao ${membership.name}!</h2>
           <p>L'associazione <b>${asd.name}</b> ti ha invitato a unirti alla loro community su MindTheCheck Events.</p>
-          <p>Per completare la tua iscrizione e vedere tutti gli eventi dell'associazione, clicca sul pulsante qui sotto:</p>
+          <p>Per completare la tua iscrizione e vedere tutti gli eventi dell'associazione, clicca sul pulsante o scansiona il codice QR qui sotto dal tuo smartphone:</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${joinLink}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
               Attiva la mia Membership
             </a>
+          </div>
+          <div style="text-align: center;">
+            <p>Scansiona il codice per attivare:</p>
+            <div style="margin: 20px 0;">
+              <img src="${qrImageUrl}" width="150" height="150" alt="QR Code" style="display: block; margin: auto;" />
+            </div>
+            <p style="font-size: 10px; color: #999;">ID: ${membership.join_token}</p>
           </div>
           <p style="font-size: 12px; color: #666;">Se il pulsante non funziona, copia questo link nel tuo browser: <br>${joinLink}</p>
           ${isDev ? `<p style="color: red; font-size: 10px;">[MODALITÀ TEST] Destinatario originale: ${membership.email}</p>` : ''}

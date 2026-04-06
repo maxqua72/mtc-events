@@ -2,6 +2,12 @@
 import { initializeApp } from 'firebase/app'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 
+// Estendiamo le opzioni della notifica per includere 'renotify'
+// che manca nelle definizioni standard di TS per il DOM
+interface ExtendedNotificationOptions extends NotificationOptions {
+  renotify?: boolean;
+}
+
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig().public.firebase
 
@@ -11,7 +17,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     hasApiKey: !!config?.apiKey 
   })
 
-  console.log('[DEBUG FIREBASE CONFIG]', JSON.stringify(config, null, 2))
+  //console.log('[DEBUG FIREBASE CONFIG]', JSON.stringify(config, null, 2))
 
   if (!config || !config.apiKey) {
     console.warn('[FIREBASE] Attenzione: Configurazione non ancora disponibile.')
@@ -96,16 +102,20 @@ export default defineNuxtPlugin((nuxtApp) => {
         // Recuperiamo la registrazione del Service Worker per mostrare la notifica
         navigator.serviceWorker.ready.then((registration) => {
           console.log('[FCM] Service Worker pronto, mostro notifica...')
-          registration.showNotification(title || 'Nuova Notifica', {
+          
+
+          const notificationOptions: ExtendedNotificationOptions = {
             body: body || '',
-            icon: icon || '/favicon.ico', // Assicurati di avere un'icona valida
-            badge: '/favicon.ico',        // Icona piccola per la barra di stato Android
-            data: payload.data,           // Importante per gestire il click e lo slug
-            tag: payload.messageId || Date.now().toString(),      // Raggruppa le notifiche simili
-            renotify: true,             // Forza la vibrazione/suono anche se il tag è uguale
-          }).catch(err => {
-          console.error('[FCM] Errore showNotification:', err)
-          })
+            icon: icon || '/favicon.ico',
+            badge: '/favicon.ico',
+            data: payload.data, 
+            tag: payload.messageId || Date.now().toString(), // Raggruppa le notifiche simili
+            renotify: true, // Forza la vibrazione/suono anche se il tag è uguale
+          };
+
+          registration.showNotification(title || 'Nuova Notifica', notificationOptions)
+          .catch(err => console.error('[FCM] Errore:', err));
+        
         }).catch(err => {
           console.error('[FCM] Errore SW Ready:', err)
         })

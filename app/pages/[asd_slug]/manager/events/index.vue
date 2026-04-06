@@ -1,5 +1,7 @@
 <script setup>
 const route = useRoute()
+const { searchQuery } = useSearch()
+
 const asdSlug = route.params.asd_slug
 
 definePageMeta({ layout: 'default' })
@@ -12,18 +14,34 @@ const filters = [
   { label: 'Corsi', value: 'corso' },
   { label: 'Altro', value: 'altro' }
 ]
-
+/*
 const filteredEvents = computed(() => {
   if (!events.value) return []
   return activeFilter.value === 'all' 
     ? events.value 
     : events.value.filter(e => e.category?.toLowerCase() === activeFilter.value)
 })
-
+*/
 // Fetch degli eventi (inclusi quelli non pubblicati per il MANAGER)
 const { data: events, refresh } = await useFetch(`/api/manager/${asdSlug}/events/`)
 
+const filteredEvents = computed(() => {
+  if (!events.value) return []
+  
+  return events.value.filter(e => {
+    // Filtro per categoria
+    const matchesCategory = activeFilter.value === 'all' || e.category?.toLowerCase() === activeFilter.value
+    
+    // Filtro per testo (searchQuery)
+    // Se la query è vuota o corta, non filtra nulla per testo
+    const searchTerm = searchQuery.value.toLowerCase()
+    const matchesSearch = searchTerm.length < 2 || 
+                         e.title?.toLowerCase().includes(searchTerm) || 
+                         e.category?.toLowerCase().includes(searchTerm)
 
+    return matchesCategory && matchesSearch
+  })
+})
 
 const deleteEvent = async (id) => {
   if (confirm('Sei sicuro di voler eliminare questo evento?')) {
@@ -92,6 +110,10 @@ const publishAllFiltered = async () => {
 
     <ManagerTabs active="events" :asdSlug="asdSlug" />
 
+    <div v-if="searchQuery.length >= 2" class="text-xs font-bold text-chess-gold uppercase tracking-widest px-1">
+      Filtrando per: "{{ searchQuery }}"
+    </div>
+
     <EventFilters v-model="activeFilter" :filters="filters" />
 
     <div v-if="filteredEvents.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -100,14 +122,16 @@ const publishAllFiltered = async () => {
 
         <EventCard :event="event" :slug="`/${asdSlug}/manager/events/${event._id}`" />
 
-        <div class="absolute bottom-4 right-4 flex gap-2">
-          <a :href="`/${asdSlug}/events/${event._id}`" target="_blank"
+        <div class="absolute bottom-4 right-4 flex gap-2 z-30">
+          <a :href="`/${asdSlug}/events/${event._id}?preview=true`" target="_blank"
+            rel="noopener noreferrer"
+            @click.stop
             class="w-10 h-10 bg-white shadow-xl rounded-full flex items-center justify-center text-chess-dark hover:text-chess-gold transition-colors border border-gray-100"
             title="Vedi Anteprima Pubblica">
             <Icon name="fa6-solid:eye" size="14" />
           </a>
 
-          <button @click="deleteEvent(event._id)"
+          <button @click.stop.prevent="deleteEvent(event._id)"
             class="w-10 h-10 bg-white shadow-xl rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors border border-gray-100"
             title="Elimina">
             <Icon name="fa6-solid:trash-can" size="14" />
@@ -122,5 +146,9 @@ const publishAllFiltered = async () => {
       <button @click="activeFilter.value = 'all'" class="text-chess-gold text-xs font-bold mt-2 underline">Resetta
         filtri</button>
     </div>
+
+    <button v-if="searchQuery.length >= 2" @click="searchQuery = ''" class="mt-2 text-chess-gold text-sm font-bold">
+        Pulisci ricerca
+      </button>
   </div>
 </template>
