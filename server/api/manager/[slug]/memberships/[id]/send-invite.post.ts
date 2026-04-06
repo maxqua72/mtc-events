@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
     body_html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
           <h2 style="color: #2563eb;">Ciao ${membership.name}!</h2>
-          <p>L'associazione <b>${asd.name}</b> ti ha invitato a unirti alla loro community su MintTheCheck Events.</p>
+          <p>L'associazione <b>${asd.name}</b> ti ha invitato a unirti alla loro community su MindTheCheck Events.</p>
           <p>Per completare la tua iscrizione e vedere tutti gli eventi dell'associazione, clicca sul pulsante qui sotto:</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${joinLink}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
