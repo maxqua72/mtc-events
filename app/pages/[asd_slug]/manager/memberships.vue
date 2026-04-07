@@ -3,11 +3,30 @@ definePageMeta({ layout: 'default' })
 const route = useRoute()
 const { asd_slug } = route.params
 
+// 1. Integrazione con il composable di ricerca
+const { searchQuery} = useSearch()
+
+
+
 // Recuperiamo prima le info dell'ASD per avere l'ID
 const { data: asd } = await useFetch(`/api/asd/${asd_slug}`)
 
 // Recuperiamo la lista soci filtrata per questa ASD
 const { data: members, refresh } = await useFetch(`/api/manager/${asd_slug}/memberships`)
+
+// 2. Logica di filtraggio locale
+const filteredMembers = computed(() => {
+  const allMembers = members.value || []
+  if (!searchQuery.value) return allMembers
+
+  const q = searchQuery.value.toLowerCase()
+  return allMembers.filter(m => 
+    m.name?.toLowerCase().includes(q) || 
+    m.surname?.toLowerCase().includes(q) || 
+    m.email?.toLowerCase().includes(q) ||
+    m.member_code?.toLowerCase().includes(q)
+  )
+})
 
 const showModal = ref(false)
 const selectedMember = ref(null)
@@ -139,7 +158,12 @@ const sendTestPush = async (member) => {
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-      <h2 class="text-xl font-black text-chess-dark uppercase">Anagrafica Soci</h2>
+      <div>
+        <h2 class="text-xl font-black text-chess-dark uppercase">Anagrafica Soci</h2>
+        <p v-if="searchQuery" class="text-[10px] font-bold text-chess-gold uppercase tracking-widest mt-1">
+          Trovati {{ filteredMembers.length }} soci su {{ members?.length }}
+        </p>
+      </div>
       <button @click="openModal()"
         class="bg-chess-dark text-chess-gold px-5 py-2.5 rounded-lg text-[11px] font-black uppercase flex items-center gap-2">
         <Icon name="fa6-solid:user-plus" /> Nuovo Socio
@@ -158,7 +182,7 @@ const sendTestPush = async (member) => {
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
-          <tr v-for="m in members || []" :key="m._id" class="hover:bg-gray-50 transition-colors">
+          <tr v-for="m in filteredMembers || []" :key="m._id" class="hover:bg-gray-50 transition-colors">
             <td class="py-2 px-4">
               <p class="font-bold text-chess-dark">{{ m.surname }} {{ m.name }}</p>
             </td>
@@ -206,6 +230,11 @@ const sendTestPush = async (member) => {
                   <Icon name="fa6-solid:trash" />
                 </button>
               </div>
+            </td>
+          </tr>
+          <tr v-if="filteredMembers.length === 0">
+            <td colspan="5" class="p-10 text-center text-gray-400 italic text-sm">
+              Nessun socio trovato per "{{ searchQuery }}"
             </td>
           </tr>
         </tbody>
