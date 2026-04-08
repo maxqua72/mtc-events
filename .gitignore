@@ -24,4 +24,4 @@ logs
 !.env.example
 
 #zip
-#build.zip
+build.zip
