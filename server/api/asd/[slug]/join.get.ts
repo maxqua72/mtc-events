@@ -2,15 +2,22 @@ import { ObjectId } from 'mongodb'
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
-  const { t: token } = getQuery(event)
+  const { t: rawToken } = getQuery(event)
   const db = await getDb()
 
-  if (!token) {
+  if (!rawToken) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Token mancante'
     })
   }
+
+  // Prepariamo le due versioni del token:
+  // 1. Quella "As Is" per il token lungo (preserva i trattini dell'UUID)
+  const longTokenSearch = rawToken.toString().trim()
+  
+  // 2. Quella "Normalizzata" per il token corto (rimuove trattini e uppercase)
+  const shortTokenSearch = rawToken.toString().replace(/-/g, '').trim().toUpperCase()
 
   // 1. Trova l'ASD per assicurarci che lo slug sia corretto
   const asd = await db.collection('associations').findOne({ slug })
@@ -20,9 +27,12 @@ export default defineEventHandler(async (event) => {
 
   // 2. Cerca la membership corrispondente al token e all'ASD
   const membership = await db.collection('memberships').findOne({
-    join_token: token,
     association_id: asd._id,
-    status: 'active' // Solo soci attivi possono fare la join
+    status: 'active', // Solo soci attivi possono fare la join
+    $or: [
+      { join_token: longTokenSearch },  // Cerca l'UUID completo (con trattini)
+      { short_token: shortTokenSearch } // Cerca il codice corto (senza trattini)
+    ]
   })
 
   if (!membership) {

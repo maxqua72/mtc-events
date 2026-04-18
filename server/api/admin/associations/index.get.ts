@@ -24,6 +24,9 @@ export default defineEventHandler(async (event) => {
         slug: 1,
         theme_color: 1,
         logo_url: 1,
+        icon_512_url: 1,
+        icon_192_url: 1,
+        icon_180_url: 1,
         created_at: 1,
         // Mappiamo i dettagli degli utenti trovati
         managers: {

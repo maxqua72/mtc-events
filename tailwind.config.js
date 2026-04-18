@@ -21,6 +21,7 @@ module.exports = {
                     board: '#ececec',    // Grigio Marmo (Sfondo Main - "Case Scure")
                     iron: '#3d3d3d',     // Grigio Ferro (Sidebar Manager)
                     chocolate: '#D2691E', // Marrone Cioccolato (Hover Pulsanti)
+                    coral: '#FF7F50', // Marrone Cioccolato (Hover Pulsanti)
                     brown: '#895129',     // Marrone Sella (Hover Pulsanti)
                 }
             }

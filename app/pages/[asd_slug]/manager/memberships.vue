@@ -109,6 +109,14 @@ const sendJoinLink = async (member, force = false) => {
     isSending.value = null
   }
 }
+const refreshAndClose = async () => {
+  await refresh()
+  showModal.value = false // Chiude la modale
+}
+
+const refreshDataOnly = async () => {
+  await refresh() // Esegue il refresh di useFetch senza chiudere nulla
+}
 /*
 const sendJoinLink = async (member) => {
   // Feedback visivo immediato (opzionale ma consigliato)
@@ -243,7 +251,9 @@ const sendTestPush = async (member) => {
 
     <Teleport to="body">
       <MembershipModal v-if="showModal" :membership="selectedMember" :asdId="asd?._id" :asdSlug="asd_slug"
-        @close="showModal = false" @save="refresh(); showModal = false" />
+        @close="showModal = false" 
+        @save="refreshAndClose"
+        @update-list="refreshDataOnly" />
       
       <PushNotificationModal v-if="showPushModal" :member="memberForPush" :asdSlug="asd_slug"
         @close="showPushModal = false" />

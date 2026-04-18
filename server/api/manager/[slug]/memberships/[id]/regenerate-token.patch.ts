@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
 
   // 2. Genera un nuovo UUID
   const newToken = randomUUID()
+  const newShortToken = await generateUniqueShortToken(db)
 
   // 3. Aggiorna la membership specifica
   // Verifichiamo anche l'association_id per sicurezza extra (cross-tenant security)
@@ -25,6 +26,7 @@ export default defineEventHandler(async (event) => {
     { 
       $set: { 
         join_token: newToken,
+        short_token: newShortToken,
         updated_at: new Date()
       } 
     }
@@ -39,6 +41,7 @@ export default defineEventHandler(async (event) => {
 
   return { 
     success: true, 
-    new_token: newToken 
+    new_token: newToken,
+    new_short_token: newShortToken
   }
 })

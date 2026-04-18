@@ -1,6 +1,6 @@
 // server/api/manager/[slug]/memberships.post.ts
 import { ObjectId } from 'mongodb'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, randomBytes } from 'node:crypto'
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
@@ -13,7 +13,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // Se passiamo un _id nel body, stiamo facendo un EDIT, altrimenti un INSERT
-  const filter = body._id 
+  const isEdit = !!body._id
+  const filter = isEdit 
     ? { _id: new ObjectId(body._id) } 
     : { email: body.email.toLowerCase().trim(), association_id: asd._id };
 
@@ -41,6 +42,11 @@ export default defineEventHandler(async (event) => {
     created_at: new Date()
   }
 
+  // GESTIONE TOKEN CORTO (Solo se è un nuovo inserimento)
+  if (!isEdit) {
+    insertData.short_token = await generateUniqueShortToken(db)
+  }
+
   const result = await db.collection('memberships').updateOne(
     filter,
     {
@@ -51,5 +57,7 @@ export default defineEventHandler(async (event) => {
   )
 
   return { success: true, 
-    id: body._id || result.upsertedId }
+    id: body._id || result.upsertedId, 
+    short_token: insertData.short_token // Lo restituiamo per eventuale feedback
+  }
 })

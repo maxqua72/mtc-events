@@ -46,17 +46,25 @@
     </div>
 
     <AppMobileNav :isManager="isManager" />
+
+    <IosInstallModal 
+      v-if="pwaStore.showInstallGuidance" 
+      @close="pwaStore.showInstallGuidance = false" 
+    />
   </div>
 </template>
 
 <script setup>
 import { useAsdStore } from '~/stores/asd'
+import { usePwaStore } from '~/stores/pwa'
 
 const { searchQuery, executeSearch, results, isSearching, searchContext } = useSearch()
 
 const asdStore = useAsdStore()
 const userStore = useUserStore()
+const pwaStore = usePwaStore()
 const route = useRoute()
+const currentSlug = computed(() => route.params.asd_slug)
 
 const asdInfo = computed(() => asdStore.info)
 
@@ -90,6 +98,62 @@ const searchPlaceholder = computed(() => {
   if (searchContext.value === 'EVENTS') return 'Cerca negli eventi...'
   if (searchContext.value === 'MEMBERS') return 'Cerca tra i soci...'
   return 'Cerca nel club...'
+})
+
+onMounted(() => {
+  pwaStore.initPwaDetection()
+})
+
+// Calcoliamo dinamicamente i link per il manifest e l'icona
+const dynamicManifest = computed(() => {
+  return currentSlug.value ? `/api/pwa/${currentSlug.value}/manifest.json` : '/manifest.webmanifest' 
+})
+
+// Definiamo l'icona specifica per iOS (Apple Touch Icon)
+const appleIcon = computed(() => {
+  // 1. Priorità all'icona specifica 180x180
+  if (asdStore.info?.icon_180_url) return asdStore.info.icon_180_url
+  
+  // 2. Fallback sul logo principale
+  if (asdStore.info?.logo_url) return asdStore.info.logo_url
+  
+  // 3. Fallback estremo (file statico)
+  return '/pwa-192x192.png'
+})
+
+// Definiamo il colore del tema dinamico per la barra di stato del browser
+const themeColor = computed(() => asdStore.info?.theme_color || '#1a1a1a')
+
+useHead({
+  link: [
+    {
+      rel: 'manifest',
+      href: dynamicManifest,
+      tagPriority: 'high',
+      key: 'manifest'
+    },
+    // Per iOS, il logo deve essere indicato anche come apple-touch-icon
+    {
+      rel: 'apple-touch-icon',
+      href: appleIcon, // Il logo caricato su MongoDB
+      key: 'apple-icon'
+    }
+  ],
+  meta: [
+    { 
+      name: 'apple-mobile-web-app-title', 
+      content: computed(() => asdStore.info?.name || 'MTC Events'),
+      key: 'apple-title'
+    },
+    {
+      name: 'theme-color',
+      content: themeColor,
+      key: 'theme-color'
+    },
+    // Forza la visualizzazione corretta su iOS
+    { name: 'apple-mobile-web-app-capable', content: 'yes' },
+    { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
+  ]
 })
 </script>
 

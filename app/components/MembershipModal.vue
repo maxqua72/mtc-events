@@ -55,7 +55,7 @@ const handleSendEmail = () => {
   if (!form.value.email) return alert("Inserisci un'email valida per inviare il link!")
   alert(`Implementazione futura: Invio email a ${form.value.email} con link join e token ${props.membership.join_token}`)
 }
-
+/*
 const handleRegenerate = async () => {
   if (confirm('ATTENZIONE: Rigenerando il link, quello precedente non funzionerà più. Il socio dovrà ricollegarsi. Procedere?')) {
     try {
@@ -68,6 +68,50 @@ const handleRegenerate = async () => {
       isSubmitting.value = false
     }
   }
+}*/
+const handleRegenerate = async () => {
+  if (confirm('ATTENZIONE: Rigenerando i codici, quelli precedenti (sia link che codice corto) smetteranno di funzionare. Procedere?')) {
+    try {
+      isSubmitting.value = true
+      // Usiamo POST come definito nell'API server-side
+      const response = await $fetch(`/api/manager/${props.asdSlug}/memberships/${props.membership._id}/regenerate-token`, { 
+        method: 'PATCH' 
+      })
+      if (response.success) {
+        // Aggiorniamo i riferimenti locali così l'interfaccia si aggiorna subito
+        // Nota: stiamo modificando la prop reattiva, che in Vue 3 aggiornerà il template
+        props.membership.join_token = response.new_token
+        props.membership.short_token = response.new_short_token
+        
+        // Notifichiamo il padre che i dati sono cambiati (per aggiornare la lista sotto)
+        // ma non emettiamo 'save' se 'save' causa la chiusura della modale.
+        emit('update-list') 
+        
+        alert("Codici rigenerati con successo!")
+      }
+    } catch (e) {
+      alert("Errore nella rigenerazione dei token")
+      console.log(e)
+    } finally {
+      isSubmitting.value = false
+    }
+  }
+}
+
+// Funzione interna per formattare il token solo per la visualizzazione
+const formatTokenForDisplay = (token) => {
+  if (!token || token.length < 6) return token || '___-___'
+  // Rimuoviamo eventuali trattini esistenti (se salvati per errore) e riformattiamo
+  const clean = token.replace('-', '')
+  return `${clean.slice(0, 3)}-${clean.slice(3)}`
+}
+
+const copyToClipboard = (text) => {
+  if (!text) return
+  // Copiamo il testo pulito (senza trattino) negli appunti
+  const cleanText = text.replace('-', '')
+  navigator.clipboard.writeText(cleanText)
+  alert("Codice copiato!")
 }
 </script>
 
@@ -121,18 +165,34 @@ const handleRegenerate = async () => {
           </div>
         </div>
 
-        <div v-if="membership?.join_token" class="space-y-4">
+        <div v-if="membership?.short_token || membership?.join_token" class="space-y-4">
           
-          <div class="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-between">
-            <div>
-              <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Token di Accesso</label>
-              <code class="text-xs font-mono text-chess-iron font-bold">{{ membership.join_token }}</code>
-            </div>
-            <div class="flex items-center gap-2">
-               <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-               <span class="text-[9px] font-black text-green-600 uppercase">Attivo</span>
-            </div>
-          </div>
+          <div class="p-5 bg-gray-50 rounded-2xl border border-dashed border-gray-200 space-y-4">
+    
+    <div class="flex items-center justify-between">
+      <div>
+        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Codice di Accesso Rapido</label>
+        <code class="text-2xl font-mono text-chess-dark font-black tracking-tighter">
+          {{ formatTokenForDisplay(membership.short_token) || '---' }}
+        </code>
+      </div>
+      <button type="button" @click="copyToClipboard(membership.short_token)" 
+        class="h-10 w-10 flex items-center justify-center rounded-full bg-white border border-gray-200 text-chess-iron hover:text-chess-gold transition-colors shadow-sm">
+        <Icon name="fa6-solid:copy" size="16" />
+      </button>
+    </div>
+    <div class="flex items-center justify-between">
+      <div>
+        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Token di Accesso</label>
+        <code class="text-xs font-mono text-chess-iron font-bold">{{ membership.join_token }}</code>
+      </div>
+      <div class="flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+          <span class="text-[9px] font-black text-green-600 uppercase">Attivo</span>
+      </div>
+    </div>
+  </div>
+          
 
           <div class="space-y-2">
             <label class="text-[10px] font-black text-chess-chocolate uppercase tracking-widest">Comunicazione e Sicurezza</label>
@@ -155,6 +215,8 @@ const handleRegenerate = async () => {
             </div>
           </div>
         </div>
+
+        
 
         <div class="pt-6 flex gap-3">
           <button type="button" @click="$emit('close')" class="flex-1 px-6 py-3 rounded-lg text-[11px] font-black uppercase border border-gray-200 text-gray-400 hover:bg-gray-50">Annulla</button>
