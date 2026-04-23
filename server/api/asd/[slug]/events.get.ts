@@ -3,6 +3,7 @@ export default defineEventHandler(async (event) => {
     const slug = getRouterParam(event, 'slug')
     const db = await getDb()
     const now = new Date()
+    now.setHours(0, 0, 0, 0) // Reset dell'ora per includere tutto l'oggi
 
     // 1. Troviamo prima l'ASD per ottenere il suo ID univoco
     const asd = await db.collection('associations').findOne({ slug: slug })
@@ -20,6 +21,7 @@ export default defineEventHandler(async (event) => {
         .find({
             association_id: asd._id,
             is_published: true,
+            /*
             $or: [
                 // 1. Eventi futuri: la data di inizio è maggiore o uguale a ora
                 { start_date: { $gte: now } },
@@ -28,7 +30,9 @@ export default defineEventHandler(async (event) => {
                     start_date: { $lte: now },
                     end_date: { $gte: now }
                 }
-            ]
+            ] // equivalente al codice sotto.*/
+            // Se end_date è >= oggi, l'evento è o futuro o in corso
+            end_date: { $gte: now }
 
         })
         .sort({ start_date: 1 })

@@ -12,6 +12,11 @@ const selectedAsd = ref(null)
 const showManagerModal = ref(false)
 const asdForManager = ref(null)
 
+// MAnager Modal Edit
+const showEditManagerModal = ref(false)
+const selectedAsdForEdit = ref(null)
+const selectedManagerForEdit = ref(null)
+
 // --- Logica ASD ---
 const openCreateModal = () => {
     selectedAsd.value = null
@@ -48,6 +53,18 @@ const handleRemoveManager = async (asdId, email) => {
         }
     }
 }
+
+const handleEditManager = (asd, manager) => {
+    selectedAsdForEdit.value = asd
+    selectedManagerForEdit.value = manager
+    showEditManagerModal.value = true
+}
+
+const closeEditModal = () => {
+    showEditManagerModal.value = false
+    selectedManagerForEdit.value = null
+    selectedAsdForEdit.value = null
+}
 </script>
 
 <template>
@@ -64,8 +81,11 @@ const handleRemoveManager = async (asdId, email) => {
         </div>
 
         <div v-if="associations?.length > 0" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <AsdCard v-for="asd in associations" :key="asd._id" :asd="asd" @edit="editAsd" @delete="deleteAsd"
-                @add-manager="handleAddManager" @remove-manager="handleRemoveManager" />
+            <AsdCard v-for="asd in associations" :key="asd._id" :asd="asd" 
+                @edit="editAsd" @delete="deleteAsd"
+                @add-manager="handleAddManager" 
+                @remove-manager="handleRemoveManager" 
+                @edit-manager="handleEditManager" />
         </div>
 
         <div v-else class="bg-white border-2 border-dashed border-gray-200 rounded-xl py-20 text-center">
@@ -79,6 +99,14 @@ const handleRemoveManager = async (asdId, email) => {
 
             <ManagerModal v-if="showManagerModal" :asd="asdForManager" @close="showManagerModal = false"
                 @saved="refresh" />
+            
+            <ManagerEditModal 
+                v-if="showEditManagerModal" 
+                :asd="selectedAsdForEdit" 
+                :managerEmail="selectedManagerForEdit.email" 
+                @close="closeEditModal()"
+                @updated="refresh(); closeEditModal()" 
+            />
         </Teleport>
     </div>
 </template>

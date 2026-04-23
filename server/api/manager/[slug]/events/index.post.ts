@@ -13,9 +13,12 @@ export default defineEventHandler(async (event) => {
   // Funzione utility per convertire stringhe ISO in oggetti Date validi
   const toDate = (dateStr: string) => {
     if (!dateStr) return null
-    const d = new Date(dateStr)
+    // Aggiungendo T12:00:00, forziamo il parsing locale a mezzogiorno
+    const d = new Date(`${dateStr}T12:00:00`)
     return isNaN(d.getTime()) ? null : d
   }
+
+  
   
   const newEvent = {
     ...body,

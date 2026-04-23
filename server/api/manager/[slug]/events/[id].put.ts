@@ -39,10 +39,42 @@ export default defineEventHandler(async (event) => {
   if (updateData.resource_id && typeof updateData.resource_id === 'string') {
     updateData.resource_id = new ObjectId(updateData.resource_id)
   }
-
+  /*
   if (updateData.start_date) updateData.start_date = new Date(updateData.start_date)
   if (updateData.end_date) updateData.end_date = new Date(updateData.end_date)
   if (updateData.registration_time) updateData.registration_time = new Date(updateData.registration_time)
+  */
+
+  // Funzione interna per forzare il mezzogiorno locale durante il parsing
+  // Funzione interna tipizzata
+  const toSafeDate = (dateVal: string | Date | null | undefined): Date | null => {
+    if (!dateVal) return null
+    
+    // Estraiamo solo la parte YYYY-MM-DD
+    const s = dateVal instanceof Date 
+      ? dateVal.toISOString().split('T')[0] 
+      : String(dateVal).split('T')[0]
+      
+    // Creiamo la data forzando il mezzogiorno
+    const d = new Date(`${s}T12:00:00`)
+    return isNaN(d.getTime()) ? null : d
+  }
+
+  // Applichiamo la normalizzazione a mezzogiorno
+  if (updateData.start_date) {
+    updateData.start_date = toSafeDate(updateData.start_date)
+  }
+
+  if (updateData.end_date) {
+    updateData.end_date = toSafeDate(updateData.end_date)
+  } else if (updateData.start_date) {
+    // Fallback: se manca la fine, l'evento scade lo stesso giorno (a mezzogiorno)
+    updateData.end_date = toSafeDate(updateData.start_date)
+  }
+
+  if (updateData.registration_time) {
+    updateData.registration_time = toSafeDate(updateData.registration_time)
+  }
 
   // 3. AGGIORNAMENTO SUL DB
   await db.collection('events').updateOne(

@@ -20,9 +20,34 @@ if (import.meta.client) {
   })
 }
 
+let lastRefresh = 0
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    const now = Date.now()
+    // Aggiorna solo se sono passati almeno 30 secondi dall'ultimo refresh
+    if (now - lastRefresh > 30000) {
+      console.log('PWA riattivata: sincronizzazione dati globale...')
+      
+      // Questo comando di Nuxt rinfresca TUTTI i useFetch e useAsyncData 
+      // attivi nella pagina corrente
+      refreshNuxtData()
+      lastRefresh = now
+    }
+  }
+}
+
 onMounted(() => {
   // Carica i dati salvati nel localStorage all'avvio dell'app
   userStore.initStore()
+
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  // Opzionale: gestisce anche il ritorno online se cade la connessione
+  window.addEventListener('online', refreshNuxtData)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('online', refreshNuxtData)
 })
 
 useHead({

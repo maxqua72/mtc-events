@@ -45,8 +45,13 @@ const filteredEvents = computed(() => {
 
 const deleteEvent = async (id) => {
   if (confirm('Sei sicuro di voler eliminare questo evento?')) {
-    await $fetch(`/api/asd/${asdSlug}/events/${id}`, { method: 'DELETE' })
-    refresh()
+    try {
+      await $fetch(`/api/manager/${asdSlug}/events/${id}`, { method: 'DELETE' })
+      refresh()
+    } catch (err) {
+      console.error("Errore durante l'eliminazione:", err)
+      alert("Impossibile eliminare l'evento.")
+    }
   }
 }
 

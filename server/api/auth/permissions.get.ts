@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
   const response = {
     email: email,
     name: '',
+    surname: '',
     is_admin: false,
     managed_asds: [] as any[],
     member_identities: [] as any[]
@@ -19,6 +20,8 @@ export default defineEventHandler(async (event) => {
 
   response.is_admin = !!user.is_admin
   response.name = user.name || 'Utente'
+  response.surname = user.surname
+  
 /*
   const memberships = await db.collection('managers').aggregate([
     { $match: { user_id: user._id } },

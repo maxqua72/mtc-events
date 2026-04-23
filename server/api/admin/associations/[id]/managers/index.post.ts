@@ -26,6 +26,8 @@ export default defineEventHandler(async (event) => {
 
   // 2. Creiamo o aggiorniamo il legame nella collezione 'managers'
   // Usiamo MANAGER (maiuscolo) come da tue specifiche
+  // Creiamo il token manager usando la funzione dedicata
+  const managerToken = await generateUniqueManagerToken(db)
   await db.collection('managers').updateOne(
     { 
       user_id: new ObjectId(user._id), 
@@ -34,6 +36,7 @@ export default defineEventHandler(async (event) => {
     { 
       $set: { 
         role: 'MANAGER', 
+        manager_token: managerToken,
         assigned_at: new Date() 
       } 
     },

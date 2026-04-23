@@ -8,6 +8,9 @@ export default defineEventHandler(async (event) => {
   // 1. Trova l'evento prima di cancellarlo per vedere se ha una risorsa privata
   const eventDoc = await db.collection('events').findOne({ _id: new ObjectId(id) })
 
+  if (!eventDoc) throw createError({ statusCode: 404, message: 'Evento non trovato' })
+  
+
   if (eventDoc && eventDoc.resource_id) {
     // 2. Controlla se la risorsa è "privata"
     const file = await db.collection('resources.files').findOne({ 

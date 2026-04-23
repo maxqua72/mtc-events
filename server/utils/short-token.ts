@@ -9,7 +9,7 @@ export const generateShortToken = () => {
   return hex //`${hex.slice(0, 3)}-${hex.slice(3)}`
 }
 
-export const showToken = (hex) => {
+export const showToken = (hex: string) => {
     return`${hex.slice(0, 3)}-${hex.slice(3)}`
 }
 

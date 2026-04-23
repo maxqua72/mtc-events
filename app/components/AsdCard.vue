@@ -38,7 +38,8 @@
                 <template v-if="asd.managers && asd.managers.length > 0">
                     <div v-for="manager in asd.managers" :key="manager.email"
                         class="flex items-center gap-2 bg-white text-chess-dark px-3 py-1 rounded-lg border border-gray-200 shadow-sm group/m relative"
-                        :title="`Contatta: ${manager.email}`">
+                        :title="`Contatta: ${manager.email}`"
+                        @click.stop="$emit('edit-manager', asd, manager)">
 
                         <div class="flex flex-col">
                             <div class="flex items-center gap-2">
@@ -90,5 +91,5 @@
 
 <script setup>
 defineProps(['asd'])
-defineEmits(['edit', 'delete', 'add-manager', 'remove-manager'])
+defineEmits(['edit', 'delete', 'add-manager', 'remove-manager','edit-manager'])
 </script>

@@ -27,27 +27,33 @@
                         {{ asdStore.info?.name || 'Attiva Profilo' }}
                     </h2>
                     <p class="text-chess-gold/60 text-sm">
-                        Inserisci il codice di 6 caratteri ricevuto via email
+                        Inserisci il codice di {{ useLongToken ? '9' : '6' }} caratteri ricevuto via email
                     </p>
                 </div>
             </div>
 
             <div class="space-y-4">
-                <!-- <input 
-          v-model="manualToken" 
-          maxlength="6"
-          placeholder="ES: H7K-92X"
-          class="w-full bg-white/5 border-2 border-white/10 rounded-xl px-4 py-4 text-center text-3xl font-mono text-white tracking-[0.3em] focus:border-chess-gold outline-none transition-all uppercase placeholder:text-white/10"
-          @input="manualToken = manualToken.toUpperCase()"
-        />
-      -->
-                <ShortTokenInput v-model="manualToken" @submit="handleJoin" :disabled="status === 'processing'" />
+                <div class="min-h-[80px] flex items-center justify-center">
+                    <ShortTokenInput 
+                        v-if="!useLongToken"
+                        v-model="manualToken" 
+                        @submit="handleJoin" 
+                        :disabled="status === 'processing'" />
+                    <ManagerTokenInput 
+                        v-else 
+                        v-model="manualToken" 
+                        @submit="handleJoin" 
+                        class="animate-in zoom-in-95" 
+                        :disabled="status === 'processing'"
+                    />
+                </div>
 
                 <p v-if="errorMessage"
                     class="text-red-500 text-[10px] font-black uppercase tracking-widest bg-red-500/10 py-2 rounded-lg">
                     {{ errorMessage }}
                 </p>
-                <button @click="handleJoin(manualToken)" :disabled="manualToken.length < 6 || status === 'processing'"
+                <button @click="handleJoin(manualToken)" 
+                    :disabled="isButtonDisabled"
                     class="w-full py-4 font-black uppercase rounded-xl transition-all shadow-lg
                         disabled:bg-white/5 disabled:text-white/20
                         enabled:bg-chess-gold enabled:text-black enabled:hover:scale-[1.02] enabled:active:scale-95"
@@ -62,12 +68,28 @@
                     </span>
 
                     <span v-else>
-                        {{ manualToken.length < 6 ? 'Inserisci Codice' : 'Conferma e Accedi' }} </span>
+                        {{ (manualToken.length < 6 && !useLongToken.value) || 
+                           (manualToken.length < 9 && useLongToken.value) ? 'Inserisci Codice' : 'Conferma e Accedi' }} </span>
+                </button>
+
+                <button 
+                    v-if="!useLongToken"
+                    @click="useLongToken = true; manualToken = ''" 
+                    class="text-[10px] text-white/20 hover:text-chess-gold uppercase font-black tracking-[0.2em] transition-colors"
+                    >
+                    Hai un codice a 9 caratteri?
+                </button>
+                <button 
+                    v-if="useLongToken"
+                    @click="useLongToken = false; manualToken = ''" 
+                    class="text-[10px] text-white/20 hover:text-chess-gold uppercase font-black tracking-[0.2em] transition-colors"
+                    >
+                    Hai un codice a 6 caratteri?
                 </button>
             </div>
 
             <button @click="skipToEvents"
-                class="text-white/40 text-[10px] uppercase font-black tracking-widest hover:text-white transition-colors">
+                class="text-white/40 text-[12px] uppercase font-black tracking-widest hover:text-white transition-colors">
                 Prosegui come visitatore
             </button>
         </div>
@@ -123,10 +145,16 @@ const { isPWA } = usePwaUtils()
 
 const status = ref(urlToken ? 'processing' : 'input') // 'processing' | 'input' | 'success'
 const manualToken = ref('')
+const useLongToken = ref(false)
 const memberData = ref(null)
 const errorMessage = ref('')
 
 const asdStore = useAsdStore()
+
+const isButtonDisabled = computed(() => {
+  const minLength = useLongToken.value ? 9 : 6
+  return status.value === 'processing' || manualToken.value.length < minLength
+})
 
 definePageMeta({
     layout: false
@@ -142,7 +170,8 @@ watch(manualToken, () => {
 const handleJoin = async (tokenToVerify) => {
     const finalToken = typeof tokenToVerify === 'string' ? tokenToVerify : manualToken.value
     if (!finalToken ||
-        finalToken.length < 6) return
+        (finalToken.length < 6 && !useLongToken.value) || 
+        (finalToken.length < 9 && useLongToken.value) ) return
 
     status.value = 'processing'
     errorMessage.value = ''
@@ -154,8 +183,12 @@ const handleJoin = async (tokenToVerify) => {
 
         // Salviamo i dati nello store
         memberData.value = data
-        userStore.setAsdProfile(asd_slug, data)
-
+        if(data.asd_profile) {
+            userStore.setAsdProfile(asd_slug, data.asd_profile) // Popoliamo subito le info dell'ASD per mostrare logo/nome anche nella pagina di join
+        }
+        if(data.permissions) {
+            userStore.setAuth(data.permissions) // Sincronizziamo anche le permissions per evitare problemi di accesso dopo il join
+        }
         status.value = 'success'
 
         // LOGICA DI REDIRECT AUTOMATICO:

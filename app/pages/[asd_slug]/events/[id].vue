@@ -110,7 +110,7 @@ definePageMeta({ layout: 'default' })
             <div class="lg:col-span-2 space-y-4">
                 <section class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                     <h2
-                        class="text-xs font-black text-chess-gold uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                        class="text-xs font-black text-chess-gold uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
                         Informazioni
                     </h2>
                     <div class="prose prose-chess max-w-none text-gray-600 whitespace-pre-wrap leading-relaxed">
@@ -120,7 +120,7 @@ definePageMeta({ layout: 'default' })
 
                 <section class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                     <h2
-                        class="text-xs font-black text-chess-gold uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                        class="text-xs font-black text-chess-gold uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
                         Dove si svolge
                     </h2>
                     <div class="flex items-start gap-4">
@@ -132,9 +132,10 @@ definePageMeta({ layout: 'default' })
                             <p class="font-black text-chess-dark text-lg uppercase">{{ event.location }}</p>
                             <p class="text-gray-500 italic">{{ event.address }}, {{ event.city }} ({{ event.province }})
                             </p>
-                            <a :href="`https://www.google.com/maps/search/?api=1&query=${event.address}+${event.city}`"
+                            <a :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address + ' ' + event.city)}`"
                                 target="_blank"
-                                class="inline-block mt-3 text-xs font-bold text-chess-gold hover:underline uppercase">
+                                class="inline-flex items-center gap-2 mt-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 shadow-sm text-xs font-bold text-chess-gold hover:underline uppercase">
+                                <Icon name="logos:google-maps" size="18" class="group-hover:scale-110 transition-transform" />
                                 Apri in Google Maps
                             </a>
                         </div>
