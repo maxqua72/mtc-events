@@ -71,6 +71,7 @@ export default defineEventHandler(async (event) => {
     recipient: (isDev && process.env.RESEND_TEST_RECIPIENT) ? process.env.RESEND_TEST_RECIPIENT : user.email,
     from: isDev ? 'MTC Events <onboarding@resend.dev>' : `"${asd.name}" <sistema@events.mindthecheck.com>`,
     subject: `Accesso Manager: ${asd.name}`,
+    //body_text: `Ciao ${user.name}! Il tuo codice per accedere come MANAGER a ${asd.name} è: ${visualToken}. `,
     body_html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 30px; border-radius: 12px;">
           <div style="text-align: center; margin-bottom: 20px;">
