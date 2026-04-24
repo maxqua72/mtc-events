@@ -11,6 +11,7 @@ const loading = ref(true)
 
 // Campi del form (si popoleranno dopo il caricamento)
 const name = ref('')
+const surname = ref('')
 const email = ref('')
 const isSubmitting = ref(false)
 
@@ -18,6 +19,7 @@ const isSubmitting = ref(false)
 watch(manager, (newVal) => {
   if (newVal) {
     name.value = newVal.name
+    surname.value = newVal.surname
     email.value = newVal.email
   }
 }, { immediate: true })
@@ -25,7 +27,7 @@ watch(manager, (newVal) => {
 // Verifica se ci sono modifiche rispetto ai dati caricati dal DB
 const hasChanges = computed(() => {
   if (!manager.value) return false
-  return name.value !== manager.value.name || email.value !== manager.value.email
+  return name.value !== manager.value.name || surname.value !== manager.value.surname || email.value !== manager.value.email
 })
 
 // Formattazione token 3-3-3 usando la utility che abbiamo creato
@@ -42,7 +44,8 @@ const handleUpdate = async () => {
       body: { 
         oldEmail: manager.value.email, 
         newEmail: email.value.toLowerCase().trim(), 
-        name: name.value.trim() 
+        name: name.value.trim(),
+        surname: surname.value.trim()
       }
     })
     alert("Dati aggiornati con successo")
@@ -50,6 +53,7 @@ const handleUpdate = async () => {
     // Aggiorniamo i dati locali per resettare hasChanges senza chiudere
     manager.value.name = name.value
     manager.value.email = email.value
+    manager.value.surname = surname.value
   } catch (e) {
     alert(e.statusMessage || "Errore nell'aggiornamento")
   } finally {
@@ -128,22 +132,29 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Nome Visualizzato</label>
-            <input v-model="name" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-chess-gold" />
+        <div class="space-y-6">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Nome</label>
+              <input v-model="name" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-chess-gold" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Cognome</label>
+              <input v-model="surname" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-chess-gold" />
+            </div>
           </div>
 
           <div class="space-y-2">
             <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Email di Accesso</label>
             <input v-model="email" type="email" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-chess-gold" />
-        </div>
+          </div>
           
-          <button @click="handleUpdate" :disabled="isSubmitting || !hasChanges"
-            class="w-full bg-chess-dark text-chess-gold py-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg disabled:opacity-30 transition-all">
+          <button @click="handleUpdate" :disabled="isSubmitting || !hasChanges || !name || !surname"
+            class="w-full bg-chess-dark text-chess-gold py-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg disabled:opacity-30 transition-all hover:scale-[1.02]">
             Salva Modifiche
           </button>
         </div>
+      
       </div>
     </div>
   </div>

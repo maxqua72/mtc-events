@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb'
 export default defineEventHandler(async (event) => {
   const db = await getDb()
   const body = await readBody(event)
-  const { oldEmail, newEmail, name } = body
+  const { oldEmail, newEmail, name, surname } = body
 
   // 1. Troviamo l'utente (Manager) tramite la vecchia email
   const user = await db.collection('users').findOne({ email: oldEmail })
@@ -30,7 +30,8 @@ export default defineEventHandler(async (event) => {
     { 
       $set: { 
         email: newEmail.toLowerCase().trim(),
-        name: name.trim()
+        name: name.trim(),
+        surname: surname.trim()
       } 
     }
   )

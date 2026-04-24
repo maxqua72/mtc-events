@@ -138,6 +138,7 @@
 const route = useRoute()
 const asd_slug = route.params.asd_slug
 const urlToken = route.query.t // Token lungo da email
+const forceInput = route.query.force === '1' // <--- Recupera il flag di forzatura
 
 const userStore = useUserStore()
 const pwaStore = usePwaStore()
@@ -226,6 +227,10 @@ onMounted(async () => {
     // Se arriviamo con un token nell'URL, proviamo subito il join
     if (urlToken) {
         handleJoin(urlToken)
+    } else if (forceInput) {
+        // Se l'utente ha forzato l'ingresso (dal profilo), mostriamo l'input
+        // anche se è già socio riconosciuto
+        status.value = 'input'
     } else {
         // Altrimenti, se non siamo identificati, chiediamo il codice corto
         if (!userStore.identities[asd_slug]?.email) {

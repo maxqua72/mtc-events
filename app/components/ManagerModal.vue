@@ -7,6 +7,7 @@ const emit = defineEmits(['close', 'saved'])
 
 const email = ref('')
 const name = ref('')
+const surname = ref('')
 const userExists = ref(false)
 const searchPerformed = ref(false)
 const isSubmitting = ref(false)
@@ -14,15 +15,17 @@ const isSubmitting = ref(false)
 // 1. Cerca se l'utente esiste già nel sistema
 const checkUser = async () => {
   if (!email.value.includes('@')) return
-  
+
   try {
     const user = await $fetch(`/api/admin/users/search?email=${email.value}`)
     if (user) {
       name.value = user.name
+      surname.value = user.surname
       userExists.value = true
     } else {
       userExists.value = false
       name.value = '' // Pronto per inserimento manuale
+      surname.value = ''
     }
     searchPerformed.value = true
   } catch (e) {
@@ -39,7 +42,8 @@ const saveManager = async () => {
       method: 'POST',
       body: {
         email: email.value,
-        name: name.value,
+        name: name.value.trim() || '',
+        surname: surname.value?.trim() || '',
         role: 'MANAGER' // Come richiesto dalle istruzioni
       }
     })
@@ -57,8 +61,9 @@ const saveManager = async () => {
   <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-chess-dark/90 backdrop-blur-md" @click="$emit('close')"></div>
 
-    <div class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-      
+    <div
+      class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+
       <div class="bg-chess-gold p-6 text-chess-dark flex justify-between items-center">
         <div>
           <h3 class="text-lg font-black uppercase tracking-tight">Aggiungi MANAGER</h3>
@@ -73,13 +78,9 @@ const saveManager = async () => {
         <div class="space-y-2">
           <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Email Utente</label>
           <div class="flex gap-2">
-            <input 
-              v-model="email" 
-              type="email" 
-              placeholder="cerca@email.it"
+            <input v-model="email" type="email" placeholder="cerca@email.it"
               class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-chess-gold"
-              @blur="checkUser"
-            />
+              @blur="checkUser" />
             <button @click="checkUser" class="bg-gray-100 px-4 rounded-lg hover:bg-gray-200 transition-colors">
               <Icon name="fa6-solid:magnifying-glass" size="14" class="text-chess-dark" />
             </button>
@@ -87,15 +88,22 @@ const saveManager = async () => {
         </div>
 
         <div v-if="searchPerformed" class="space-y-4 animate-in slide-in-from-top-2">
-          <div class="space-y-2">
-            <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Nome Completo</label>
-            <input 
-              v-model="name" 
-              type="text" 
-              :disabled="userExists"
-              placeholder="Inserisci nome e cognome"
-              class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm font-bold outline-none disabled:opacity-60"
-            />
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Nome</label>
+              <input v-model="name" type="text" :disabled="userExists" placeholder="Es: Mario"
+                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm font-bold outline-none disabled:opacity-60 focus:ring-2 focus:ring-chess-gold/20" />
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Cognome</label>
+              <input v-model="surname" type="text" :disabled="userExists" placeholder="Es: Rossi"
+                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm font-bold outline-none disabled:opacity-60 focus:ring-2 focus:ring-chess-gold/20" />
+            </div>
+          </div>
+
+          <div class="pt-1">
             <p v-if="userExists" class="text-[9px] text-green-600 font-bold flex items-center gap-1">
               <Icon name="fa6-solid:circle-check" /> Utente già registrato nel sistema
             </p>
@@ -104,11 +112,8 @@ const saveManager = async () => {
             </p>
           </div>
 
-          <button 
-            @click="saveManager"
-            :disabled="isSubmitting || !name"
-            class="w-full bg-chess-dark text-chess-gold py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-          >
+          <button @click="saveManager" :disabled="isSubmitting || !name.trim() "
+            class="w-full bg-chess-dark text-chess-gold py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">
             {{ isSubmitting ? 'Elaborazione...' : 'Conferma Assegnazione' }}
           </button>
         </div>

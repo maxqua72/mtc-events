@@ -17,7 +17,8 @@ export default defineEventHandler(async (event) => {
     // Se l'utente non esiste, lo creiamo usando il nome passato dal modal
     const result = await db.collection('users').insertOne({
       email,
-      name: body.name || 'Nuovo Utente', // Fallback se il nome mancasse
+      name: body.name || 'Nuovo Nome', // Fallback se il nome mancasse
+      surname: body.surname || 'Nuovo Cognome', // Fallback se il cognome mancasse
       created_at: new Date(),
       is_admin: false // Default per i nuovi MANAGER
     })

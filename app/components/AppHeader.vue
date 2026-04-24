@@ -52,6 +52,7 @@
     </div>
 
     <div v-if="currentUser.role !== 'GUEST'"
+      @click="showProfileModal = true"
       class="flex items-center gap-3 pl-4 border-l border-white/10 animate-in fade-in slide-in-from-right-2">
       <div class="text-right hidden sm:block">
         <p class="text-[9px] font-black uppercase tracking-widest leading-none mb-1" :class="{
@@ -72,8 +73,8 @@
         'bg-red-500/10 border-red-500/30 text-red-500': currentUser.role === 'MANAGER',
         'bg-chess-gold/10 border-chess-gold/30 text-chess-gold': currentUser.role === 'ADMIN' || currentUser.role === 'MEMBER'
       }">
-        <Icon :name="currentUser.role === 'ADMIN' ? 'fa6-solid:shield' :
-            (currentUser.role === 'MANAGER' ? 'fa6-solid:shield-halved' : 'fa6-solid:id-card')
+        <Icon :name="currentUser.role === 'ADMIN' ? 'fa6-solid:crown' :
+            (currentUser.role === 'MANAGER' ? 'fa6-solid:user-shield' : 'fa6-solid:user')
           " size="16" />
       </div>
     </div>
@@ -82,6 +83,15 @@
 
     <div v-if="isDropdownOpen" @click="isDropdownOpen = false" class="fixed inset-0 z-40"></div>
   </header>
+
+  <Teleport to="body">
+    <ProfileModal 
+      v-if="showProfileModal" 
+      :user="currentUser" 
+      :asd-slug="info?.slug"
+      @close="showProfileModal = false" 
+    />
+  </Teleport>
 </template>
 
 <script setup>
@@ -100,6 +110,7 @@ const props = defineProps({
 
 const userStore = useUserStore()
 const isDropdownOpen = ref(false)
+const showProfileModal = ref(false)
 
 const canSwitch = computed(() => userStore.followedAsds.length > 1)
 
@@ -116,7 +127,9 @@ const toggleDropdown = () => {
 const currentUser = computed(() => {
   const slug = props.info?.slug
   const authData = userStore.auth // Dati di login (Admin/Manager) [cite: 2026-02-07]
+  const profile = slug ? userStore.identities[slug] : null
 
+  /*
   // 1. Caso ADMIN: Nome reale dallo store auth
   if (authData?.is_admin === true || authData?.is_admin === "true") {
     return { 
@@ -134,14 +147,33 @@ const currentUser = computed(() => {
   }
 
   // 3. Caso SOCIO: Nome dalla collezione memberships [cite: 2026-02-21]
-  const profile = slug ? userStore.identities[slug] : null
+  //const profile = slug ? userStore.identities[slug] : null
   if (profile && profile.role !== 'GUEST') {
     return {
       name: profile.name, // Esempio: "Mario Rossi" [cite: 2026-02-21]
       role: 'MEMBER'
     }
   }
+*/
+  // Dati base per tutti i ruoli loggati
+  const baseData = {
+    name: authData?.name || profile?.name || 'Utente',
+    surname: authData?.surname || profile?.surname || '',
+    email: authData?.email || profile?.email || '',
+    expiry_date: profile?.expiry_date || null
+  }
 
+  if (authData?.is_admin === true || authData?.is_admin === "true") {
+    return { ...baseData, role: 'ADMIN' }
+  }
+
+  if (props.isManager && authData) {
+    return { ...baseData, role: 'MANAGER' }
+  }
+
+  if (profile && profile.role !== 'GUEST') {
+    return { ...baseData, role: 'MEMBER' }
+  }
   return { name: 'Visitatore', role: 'GUEST' }
 })
 </script>

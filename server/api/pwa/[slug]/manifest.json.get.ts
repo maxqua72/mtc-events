@@ -48,12 +48,13 @@ export default defineEventHandler(async (event) => {
   return {
     id: `/${slug}/`,
     name: asd.name,
-    short_name: asd.name.substring(0, 12),
+    short_name: asd.name,
     theme_color: asd.theme_color ||'#1a1a1a',
     background_color: '#1a1a1a',
     display: 'standalone',
     scope: `/${slug}/`,
-    start_url: `/${slug}/events?mode=pwa`,
+    //start_url: `/${slug}/events?mode=pwa`,
+    start_url: `/${slug}?mode=pwa`,
     icons: icons,
     screenshots: [
       {

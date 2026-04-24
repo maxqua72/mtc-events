@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
           $map: {
             input: "$manager_details",
             as: "m",
-            in: { name: "$$m.name", email: "$$m.email" }
+            in: { name: "$$m.name", surname: "$$m.surname", email: "$$m.email" }
           }
         }
       }

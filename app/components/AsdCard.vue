@@ -44,14 +44,14 @@
                         <div class="flex flex-col">
                             <div class="flex items-center gap-2">
                                 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                <span class="text-[12px] font-bold leading-none">{{ manager.name }}</span>
+                                <span class="text-[12px] font-bold leading-none">{{ manager.name }} {{ manager.surname }}</span>
                             </div>
 
 
                             <span class="text-[11px] text-gray-400 font-mono mt-0.5">{{ manager.email }}</span>
                         </div>
 
-                        <button @click.prevent="$emit('remove-manager', asd._id, manager.email)"
+                        <button @click.stop.prevent="$emit('remove-manager', asd._id, manager.email)"
                             class="ml-1 text-gray-300 hover:text-red-500 transition-colors">
                             <Icon name="fa6-solid:xmark" size="10" />
                         </button>

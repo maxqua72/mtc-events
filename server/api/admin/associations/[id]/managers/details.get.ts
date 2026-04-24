@@ -43,6 +43,7 @@ export default defineEventHandler(async (event) => {
     return {
       _id: user._id,
       name: user.name,
+      surname: user.surname,
       email: user.email,
       manager_token: managerData?.manager_token || null
     }
