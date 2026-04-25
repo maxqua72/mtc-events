@@ -4,31 +4,61 @@ const props = defineProps({
 })
 
 const handleRecover = () => {
-  // 1. Controlliamo se è un Manager/Admin (Cookie)
+  // Se l'errore è 401 (non loggato), puliamo tutto e torniamo in home
+  // Inutile cercare di recuperare se non c'è il cookie
+  if (props.error.statusCode === 401) {
+    return clearError({ redirect: '/' })
+  }
+
   const auth = useCookie('user_auth').value
   
+  // Se è un Manager/Admin (Cookie)
   if (auth && auth.managed_asds?.length > 0) {
-    // Se è manager, lo mandiamo alla dashboard della sua prima ASD
     const firstSlug = auth.managed_asds[0].asd_slug
     return clearError({ redirect: `/${firstSlug}/manager/dashboard` })
   }
 
-  // 2. Se non è manager, controlliamo se è un Visitatore/Socio (LocalStorage)
+  // Se è un Visitatore (LocalStorage)
   if (import.meta.client) {
     const userData = localStorage.getItem('user_data')
     if (userData) {
       const parsed = JSON.parse(userData)
       if (parsed.followedAsds?.length > 0) {
-        // Lo mandiamo agli eventi dell'ultima ASD valida visitata
         const lastAsd = parsed.followedAsds[parsed.followedAsds.length - 1]
         return clearError({ redirect: `/${lastAsd}` })
       }
     }
   }
 
-  // 3. Fallback estremo: se non abbiamo proprio nulla, facciamo un refresh pulito
   clearError({ redirect: '/' })
 }
+
+// Helper per i testi dinamici
+const errorDetails = computed(() => {
+  switch (props.error.statusCode) {
+    case 401:
+      return {
+        icon: 'fa6-solid:key',
+        label: 'Sessione Scaduta',
+        color: 'text-chess-gold',
+        msg: 'La tua sessione di accesso non è più valida. Usa il link ricevuto via email per rientrare.'
+      }
+    case 403:
+      return {
+        icon: 'fa6-solid:user-lock',
+        label: 'Permesso Negato',
+        color: 'text-red-500',
+        msg: props.error.statusMessage || "Non disponi delle autorizzazioni per accedere a questa area."
+      }
+    default:
+      return {
+        icon: 'fa6-solid:ghost',
+        label: 'Pagina Non Trovata',
+        color: 'text-gray-400',
+        msg: "L'indirizzo inserito non è corretto o la pagina è stata spostata."
+      }
+  }
+})
 </script>
 
 <template>
@@ -39,13 +69,21 @@ const handleRecover = () => {
 
     <div class="max-w-md w-full relative">
       <div class="bg-chess-iron border border-white/10 rounded-2xl p-10 shadow-2xl text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
+        
+        <div 
+          class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent"
+          :class="errorDetails.color"
+        ></div>
 
         <div class="mb-8 flex justify-center">
-          <div class="w-20 h-20 bg-white/5 border border-red-500/20 rounded-2xl flex items-center justify-center">
+          <div 
+            class="w-20 h-20 bg-white/5 border rounded-2xl flex items-center justify-center"
+            :class="errorDetails.color.replace('text-', 'border-').replace('500', '500/20')"
+          >
             <Icon 
-              :name="error.statusCode === 403 ? 'fa6-solid:user-lock' : 'fa6-solid:ghost'" 
-              class="text-red-500/80 text-4xl" 
+              :name="errorDetails.icon" 
+              class="text-4xl" 
+              :class="errorDetails.color"
             />
           </div>
         </div>
@@ -54,20 +92,23 @@ const handleRecover = () => {
           {{ error.statusCode }}
         </h1>
         
-        <h2 class="text-xs font-black text-red-400 uppercase tracking-[0.3em] mb-6">
-          {{ error.statusCode === 404 ? 'ASD Non Trovata' : 'Accesso Negato' }}
+        <h2 
+          class="text-xs font-black uppercase tracking-[0.3em] mb-6"
+          :class="errorDetails.color"
+        >
+          {{ errorDetails.label }}
         </h2>
         
         <div class="mb-10 text-gray-400 text-sm leading-relaxed font-medium">
-          {{ error.message || "L'identificativo dell'associazione non è corretto o è stato rimosso." }}
+          {{ errorDetails.msg }}
         </div>
 
         <button 
           @click="handleRecover"
           class="w-full bg-chess-gold hover:bg-yellow-500 text-chess-dark py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl flex items-center justify-center gap-3"
         >
-          <Icon name="fa6-solid:arrow-rotate-left" />
-          Riprendi Navigazione
+          <Icon :name="error.statusCode === 401 ? 'fa6-solid:house' : 'fa6-solid:arrow-rotate-left'" />
+          {{ error.statusCode === 401 ? 'Torna alla Home' : 'Riprendi Navigazione' }}
         </button>
       </div>
     </div>

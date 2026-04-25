@@ -124,6 +124,12 @@ const appleIcon = computed(() => {
 // Definiamo il colore del tema dinamico per la barra di stato del browser
 const themeColor = computed(() => asdStore.info?.theme_color || '#1a1a1a')
 
+// Calcoliamo l'URL dell'icona. 
+// Se l'ASD ha un logo lo usiamo, altrimenti usiamo la favicon di default.
+const faviconUrl = computed(() => {
+  return asdStore.info?.logo_url || '/favicon.ico'
+})
+
 useHead({
   link: [
     {
@@ -137,6 +143,11 @@ useHead({
       rel: 'apple-touch-icon',
       href: appleIcon, // Il logo caricato su MongoDB
       key: 'apple-icon'
+    },
+    {
+      rel: 'icon',
+      key: 'dynamic-favicon',
+      href: faviconUrl
     }
   ],
   meta: [

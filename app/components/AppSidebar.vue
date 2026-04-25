@@ -46,7 +46,7 @@
 
       <div class="pt-4 border-t border-white/10 flex items-center gap-3">
         <div class="w-6 h-6 rounded bg-black/20 flex items-center justify-center">
-          <Icon :name="isAdmin ? 'fa6-solid:shield-halved' : 'fa6-solid:user-tie'" class="text-gray-400 text-[10px]" />
+          <Icon :name="isAdmin ? 'fa6-solid:crown text-chess-gold' : 'fa6-solid:user-shield text-red-400'" class="text-[10px]" />
         </div>
         <span class="text-[10px] font-bold text-gray-400 tracking-tighter uppercase">
           {{ isAdmin ? 'Admin Mode' : 'Manager Mode' }}

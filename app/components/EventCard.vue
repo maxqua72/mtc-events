@@ -86,20 +86,26 @@ const formattedDate = computed(() => {
   return date.toLocaleDateString('it-IT', {
     weekday: 'long',
     day: '2-digit',
-    month: 'short'
+    month: 'short',
+    timeZone: 'UTC'
   }).replace(/^\w/, (c) => c.toUpperCase())
 })
 
 // Gestione dinamica "dalle ... alle"
 const timeRange = computed(() => {
-  const start = new Date(props.event.start_date).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+  // Usiamo direttamente le stringhe fornite dall'utente (es. "10:00")
+  const start = props.event.start_time
+  const end = props.event.end_time
 
-  if (props.event.end_time && (!props.event.end_date || props.event.end_date === props.event.start_date)) {
-    const end = new Date(props.event.start_date).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+  if (start && end) {
     return `dalle ${start} alle ${end}`
   }
 
-  return `ore ${start}`
+  if (start) {
+    return `ore ${start}`
+  }
+
+  return 'Orario da definire'
 })
 
 const openMap = () => {

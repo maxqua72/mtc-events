@@ -12,7 +12,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex items-center gap-1.5 opacity-30 hover:opacity-100 transition-opacity duration-300 cursor-default select-none">
+  <div class="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity duration-300 cursor-default select-none">
     <span class="font-mono text-[9px] font-medium uppercase tracking-[0.15em] text-chess-gold">
       v{{ version }} {{ isStandalone ? 'PWA' : 'Web' }}
     </span>

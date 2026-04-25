@@ -14,13 +14,19 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   // 2. Recuperiamo l'auth dal cookie (disponibile sia su Server che Client)
   // useCookie senza parametri legge tutti i cookie, specifichiamo il nome
-  const auth = useCookie('user_auth').value
+  const auth = useCookie<Record<string, any>>('user_auth').value
 
   // 3. Se non c'è auth -> Login
   if (!auth) {
-    return navigateTo({
+    /*return navigateTo({
       path: '/login',
       query: { redirect: to.fullPath } // Salviamo dove voleva andare l'utente
+    })*/
+   // Invece di /login, lanciamo un errore 401 (Unauthorized)
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Sessione non valida o scaduta. Accedi tramite il link ricevuto via email.',
+      fatal: true 
     })
   }
 
@@ -28,7 +34,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   if (isAdminPath && !auth.is_admin) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Privilegi Admin richiesti per questa operazione.',
+      statusMessage: 'Accesso riservato agli amministratori di sistema.',
       fatal: true // Importante per attivare error.vue lato server
     })
   }
@@ -39,14 +45,14 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     if (auth.is_admin) return // Il SuperAdmin passa sempre
 
     const hasAccess = auth.managed_asds?.some(
-      asd => asd.asd_slug === slug && asd.role === 'MANAGER'
+      (asd: { asd_slug: string, role: string }) => asd.asd_slug === slug && asd.role === 'MANAGER'
     )
 
     if (!hasAccess) {
       // Usiamo throw createError invece di abortNavigation per attivare error.vue
       throw createError({
         statusCode: 403,
-        statusMessage: 'Non sei autorizzato per questa ASD',
+        statusMessage: `Non hai i permessi di gestione per il club: ${slug}`,
         fatal: true 
       })
     }

@@ -37,7 +37,7 @@
       </div>
     </div>
 
-    <div class="hidden md:block flex-1 max-w-sm mx-8">
+    <div class="hidden md:block flex-1 mx-8">
       <div class="relative">
         <Icon name="fa6-solid:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
           size="14" />
@@ -48,8 +48,7 @@
       </div>
     </div>
 
-    <div class="hidden md:block flex-1 max-w-sm mx-4">
-    </div>
+    
 
     <div v-if="currentUser.role !== 'GUEST'"
       @click="showProfileModal = true"
