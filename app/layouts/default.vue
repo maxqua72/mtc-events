@@ -51,6 +51,8 @@
       v-if="pwaStore.showInstallGuidance" 
       @close="pwaStore.showInstallGuidance = false" 
     />
+
+    <LegalCookieBanner />
   </div>
 </template>
 

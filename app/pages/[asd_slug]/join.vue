@@ -94,6 +94,16 @@
             </button>
         </div>
 
+        <!-- STEP 2: CONSENSO LEGALE (Nuovo) -->
+        <LegalConsentStep 
+            v-if="status === 'legal'"
+            :member-name="memberData?.name"
+            :available-docs="legalDocs"
+            :loading="status === 'processing_final'"
+            @confirm="confirmActivation"
+            @back="status = 'input'"
+        />
+
         <div v-if="status === 'success'" class="w-full max-w-md space-y-10 animate-in zoom-in duration-500">
             <div class="space-y-6">
                 <div
@@ -110,17 +120,7 @@
             </div>
 
             <div class="grid gap-4 px-4">
-                <div v-if="pwaStore.canInstall" class="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
-                    <p class="text-white/80 text-xs leading-relaxed">
-                        Per ricevere le notifiche in tempo reale sui tuoi turni e risultati, installa l'app ufficiale
-                        sulla tua home.
-                    </p>
-                    <button @click="pwaStore.installApp()"
-                        class="w-full py-4 bg-white text-black font-black uppercase rounded-xl hover:bg-chess-gold transition-colors flex items-center justify-center gap-3">
-                        <Icon name="fa6-solid:download" />
-                        Installa l'App
-                    </button>
-                </div>
+                
 
                 <button @click="skipToEvents"
                     class="w-full py-4 bg-white/5 text-white font-black uppercase rounded-xl border border-white/10 hover:bg-white/10 transition-all">
@@ -144,11 +144,12 @@ const userStore = useUserStore()
 const pwaStore = usePwaStore()
 const { isPWA } = usePwaUtils()
 
-const status = ref(urlToken ? 'processing' : 'input') // 'processing' | 'input' | 'success'
+const status = ref(urlToken ? 'processing' : 'input') // 'processing' | 'input' | 'legal' | 'success'
 const manualToken = ref('')
 const useLongToken = ref(false)
 const memberData = ref(null)
 const errorMessage = ref('')
+const verifiedToken = ref('') // Salviamo il token validato per lo step finale
 
 const asdStore = useAsdStore()
 
@@ -165,9 +166,12 @@ watch(manualToken, () => {
     if (errorMessage.value) errorMessage.value = ''
 })
 
+const { data: legalDocs } = await useFetch('/api/legal/active-docs');
+
 /**
  * Gestisce la logica di Join (sia token lungo che corto)
  */
+/*
 const handleJoin = async (tokenToVerify) => {
     const finalToken = typeof tokenToVerify === 'string' ? tokenToVerify : manualToken.value
     if (!finalToken ||
@@ -206,6 +210,90 @@ const handleJoin = async (tokenToVerify) => {
         status.value = 'input'
         errorMessage.value = e.statusMessage || 'Codice non valido o scaduto.'
 
+    }
+}*/
+
+/**
+ * STEP 1: Verifica il token (senza attivare ancora nulla)
+ */
+const handleJoin = async (tokenToVerify) => {
+    const finalToken = typeof tokenToVerify === 'string' ? tokenToVerify : manualToken.value
+    if (!finalToken || (finalToken.length < 6 && !useLongToken.value)) return
+
+    status.value = 'processing'
+    errorMessage.value = ''
+
+    try {
+        // Chiamata di verifica: l'endpoint deve tornare i dati del socio (nome, email) 
+        // ma NON deve ancora impostare lo status 'active' nel DB
+        const data = await $fetch(`/api/asd/${asd_slug}/verify-token`, {
+            params: { t: finalToken }
+        })
+
+        memberData.value = data
+        verifiedToken.value = finalToken
+        status.value = 'legal' // Passiamo al componente del consenso
+    } catch (e) {
+        console.log(e)
+        status.value = 'input'
+        errorMessage.value = e.statusMessage || 'Codice non valido o scaduto.'
+    }
+}
+
+/**
+ * STEP 2: Conferma finale e salvataggio consenso
+ */
+const confirmActivation = async () => {
+    status.value = 'processing_final'
+    
+    try {
+
+        // Costruiamo il payload con le versioni e gli hash attuali
+        const legalPayload = {
+            docs: {
+                terms: { 
+                    v: legalDocs.value.terms.version, 
+                    h: legalDocs.value.terms.hash 
+                },
+                privacy: { 
+                    v: legalDocs.value.privacy.version, 
+                    h: legalDocs.value.privacy.hash 
+                },
+                cookies: { 
+                    v: legalDocs.value.cookies.version, 
+                    h: legalDocs.value.cookies.hash 
+                }
+            }
+        };
+
+        // Chiamata finale che imposta status 'active' e salva legal_consent
+        const data = await $fetch(`/api/asd/${asd_slug}/join`, {
+            method: 'POST',
+            body: { 
+                id: memberData.value.id,
+                role: memberData.value.role,
+                t: verifiedToken.value,
+                legal_acceptance: legalPayload 
+            }
+        })
+
+        // Salvataggio dati e permessi come nell'originale[cite: 1]
+        if(memberData.value.asd_profile) {
+            userStore.setAsdProfile(asd_slug, memberData.value.asd_profile)
+        }
+        if(memberData.value.permissions) {
+            userStore.setAuth(memberData.value.permissions)
+        }
+        
+        status.value = 'success'
+
+        // Redirect automatico gestito in base al device
+        const delay = isPWA() ? 1500 : 3000
+        setTimeout(() => skipToEvents(), delay)
+
+    } catch (e) {
+        status.value = 'legal'
+        errorMessage.value = "Errore durante l'attivazione. Riprova."
     }
 }
 

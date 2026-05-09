@@ -61,7 +61,13 @@ export default defineEventHandler(async (event) => {
         name: membership.name,
         email: membership.email,
         role: 'MEMBER',
-        asd_profile: { ...membership, role: 'MEMBER' } // Questo è l'oggetto completo per userStore.setAsdProfile
+        id: membership._id.toString(),
+        asd_profile: { 
+          name: membership.name,
+          email: membership.email,
+          start_date: membership.start_date,
+          expiry_date: membership.expiry_date,
+          role: 'MEMBER' } // Questo è l'oggetto completo per userStore.setAsdProfile
       }
     }
   } else {
@@ -95,11 +101,17 @@ export default defineEventHandler(async (event) => {
       })  
       if (membership) {
         // Se è anche socio, possiamo arricchire i dati con il profilo ASD
-        const asdProfile = { ...membership, role: 'MANAGER' }
+        const asdProfile = { 
+          name: membership.name,
+          email: membership.email,
+          start_date: membership.start_date,
+          expiry_date: membership.expiry_date,
+          role: 'MANAGER' }
         return {
           name: user.name,
           email: user.email,
           role: 'MANAGER',
+          id: managerEntry._id.toString(), // Serve per aggiornare il consenso legale
           asd_profile: asdProfile, // Questo è l'oggetto completo per userStore.setAsdProfile
           permissions: permissions // Questo è l'oggetto completo per userStore.setAuth
         }
@@ -110,6 +122,7 @@ export default defineEventHandler(async (event) => {
         name: user.name,
         email: user.email,
         role: 'MANAGER',
+        id: managerEntry._id.toString(), // Serve per aggiornare il consenso legale
         permissions: permissions // Questo è l'oggetto completo per userStore.setAuth
       }
     }
