@@ -46,7 +46,8 @@
 
       <div class="pt-4 border-t border-white/10 flex items-center gap-3">
         <div class="w-6 h-6 rounded bg-black/20 flex items-center justify-center">
-          <Icon :name="isAdmin ? 'fa6-solid:crown text-chess-gold' : 'fa6-solid:user-shield text-red-400'" class="text-[10px]" />
+          <Icon :name="isAdmin ? 'fa6-solid:crown' : 'fa6-solid:user-shield'" 
+    :class="['text-[10px]', isAdmin ? 'text-chess-gold' : 'text-red-400']" class="text-[10px]" />
         </div>
         <span class="text-[10px] font-bold text-gray-400 tracking-tighter uppercase">
           {{ isAdmin ? 'Admin Mode' : 'Manager Mode' }}
@@ -67,9 +68,16 @@ const route = useRoute()
 const userStore = useUserStore()
 const asdSlug = computed(() => route.params.asd_slug)
 
+console.log(`[UI RENDER] 🖥️ Componente montato. IsAdmin: ${userStore.isAdmin}, IsManager per ${asdSlug.value}: ${userStore.isManager(asdSlug.value)}`);
+
+// Monitoriamo in tempo reale se il valore cambia di colpo causando il flicker
+watch(() => userStore.auth, (newAuth) => {
+  console.log(`[UI WATCH] 🔄 L'oggetto auth dello store è CAMBIATO! Nuovo valore:`, newAuth);
+}, { deep: true })
+
 const isAdmin = computed(() => {
   // Gestiamo sia il booleano che la stringa per sicurezza [cite: 2026-02-07]
-  return userStore.auth?.is_admin === true || userStore.auth?.is_admin === "true"
+  return userStore.isAdmin === true 
 })
 
 // 3. I menuItems devono essere reattivi allo slug attuale

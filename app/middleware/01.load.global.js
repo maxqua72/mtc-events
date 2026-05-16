@@ -1,7 +1,18 @@
-// middleware/load.global.ts
+// middleware/01.load.global.ts
 export default defineNuxtRouteMiddleware(async (to) => {
   const asdStore = useAsdStore()
   const userStore = useUserStore()
+
+  console.log(`[MIDDLEWARE LOAD] 🚦 Entrato per la rotta: ${to.path} (Server: ${import.meta.server})`);
+  console.log(`[MIDDLEWARE LOAD] 📊 Stato store pre-init - isInitialized: ${userStore.isInitialized}, hasAuth: ${!!userStore.auth}`);
+
+  // 1. INIZIALIZZAZIONE STORE (Nessuna esclusione per /admin!)
+  // Deve girare sia su Server che su Client per sincronizzare Nuxt Auth Utils
+  if (!userStore.isInitialized) {
+    await userStore.initStore()
+  }
+
+  console.log(`[MIDDLEWARE LOAD] 🏁 Uscito da middleware. isInitialized: ${userStore.isInitialized}, isAdmin: ${userStore.isAdmin}`);
 
   // 1. ESCLUSIONE SISTEMA E ADMIN
   // Non eseguire il middleware se:
@@ -9,7 +20,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // - La rotta inizia con /api (anche se di solito i middleware non intercettano le API, meglio essere sicuri)
   // - È un file statico (contiene un punto) o una rotta interna Nuxt (_nuxt)
   if (
-    to.path.startsWith('/admin') || 
+    //to.path.startsWith('/admin') || 
     to.path.startsWith('/login') || 
     to.path.startsWith('/api') ||
     to.path.startsWith('/img') ||
@@ -18,12 +29,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
   ) {
     return
   }
-
+/*
   // FORZA l'idratazione dello store sul client
   if (import.meta.client && !userStore.isInitialized) {
-    userStore.initStore()
+    await userStore.initStore()
   }
-  
+  */
   // Estraiamo lo slug dai parametri della rotta
   // Assicurati che la cartella in pages si chiami [asd_slug]
   const slug = to.params.asd_slug

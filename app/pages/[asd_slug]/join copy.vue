@@ -35,21 +35,15 @@
             <div class="space-y-4">
                 <div class="min-h-[80px] flex items-center justify-center">
                     <ShortTokenInput 
-                        v-if="!useLongToken && !showAdminLogin"
+                        v-if="!useLongToken"
                         v-model="manualToken" 
                         @submit="handleJoin" 
                         :disabled="status === 'processing'" />
                     <ManagerTokenInput 
-                        v-else-if="useLongToken && !showAdminLogin"
+                        v-else 
                         v-model="manualToken" 
                         @submit="handleJoin" 
                         class="animate-in zoom-in-95" 
-                        :disabled="status === 'processing'"
-                    />
-                    <LoginInput
-                        v-else-if="showAdminLogin"
-                        v-model="adminForm"
-                        @submit="handleAdminLogin"
                         :disabled="status === 'processing'"
                     />
                 </div>
@@ -59,7 +53,6 @@
                     {{ errorMessage }}
                 </p>
                 <button @click="handleJoin(manualToken)" 
-                    v-if="!showAdminLogin"
                     :disabled="isButtonDisabled"
                     class="w-full py-4 font-black uppercase rounded-xl transition-all shadow-lg
                         disabled:bg-white/5 disabled:text-white/20
@@ -79,27 +72,6 @@
                            (manualToken.length < 9 && useLongToken.value) ? 'Inserisci Codice' : 'Conferma e Accedi' }} </span>
                 </button>
 
-                <button @click="handleAdminLogin" 
-                    v-if="showAdminLogin"
-                    :disabled="isButtonDisabled"
-                    class="w-full py-4 font-black uppercase rounded-xl transition-all shadow-lg
-                        disabled:bg-white/5 disabled:text-white/20
-                        enabled:bg-chess-gold enabled:text-black enabled:hover:scale-[1.02] enabled:active:scale-95"
-                    :class="{ '!bg-red-500/20 !text-red-500 border border-red-500/50': errorMessage }">
-                    <span v-if="status === 'processing'" class="flex items-center justify-center gap-2">
-                        <div class="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-                        Verifica...
-                    </span>
-
-                    <span v-else-if="errorMessage">
-                        Credenziali errate - Riprova
-                    </span>
-
-                    <span v-else>
-                        Accedi 
-                    </span>
-                </button>
-
                 <button 
                     v-if="!useLongToken"
                     @click="useLongToken = true; manualToken = ''" 
@@ -114,14 +86,6 @@
                     >
                     Hai un codice a 6 caratteri?
                 </button>
-
-                <button 
-                    v-if="useLongToken && !showAdminLogin"
-                    @click="showAdminLogin = true; errorMessage = ''; manualToken = ''" 
-                    class="text-[10px] text-white/20 hover:text-chess-gold uppercase font-black tracking-[0.2em] transition-colors"
-                    >
-                    Hai le creneziali di accesso?
-                </button>
             </div>
 
             <button @click="skipToEvents"
@@ -129,76 +93,6 @@
                 Prosegui come visitatore
             </button>
         </div>
-
-        <div v-if="status === 'force_password_change'" class="w-full max-w-sm space-y-8 animate-in fade-in duration-500">
-    <div class="space-y-2">
-        <div class="w-16 h-16 bg-chess-gold/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icon name="fa6-solid:unlock-keyhole" class="text-chess-gold text-2xl" />
-        </div>
-        <h2 class="text-white text-2xl font-black uppercase tracking-tight">Nuova Password</h2>
-        <p class="text-chess-gold/60 text-sm">
-            Al primo accesso è necessario scegliere una password sicura.
-        </p>
-    </div>
-
-    <ChangePasswordInput 
-        :username="adminForm.username.trim()"
-        :old-password="adminForm.password"
-        @success="handlePasswordChangeSuccess"
-    />
-    
-    <p v-if="changePasswordError" class="text-red-500 text-[10px] font-black uppercase tracking-widest bg-red-500/10 py-2 rounded-lg mt-4">
-        {{ changePasswordError }}
-    </p>
-</div>
-
-        <!--
-
-                        <div v-if="status === 'force_password_change'" class="w-full max-w-sm space-y-8 animate-in fade-in duration-500">
-                    <div class="space-y-2">
-                        <div class="w-16 h-16 bg-chess-gold/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Icon name="fa6-solid:unlock-keyhole" class="text-chess-gold text-2xl" />
-                        </div>
-                        <h2 class="text-white text-2xl font-black uppercase tracking-tight">Nuova Password</h2>
-                        <p class="text-chess-gold/60 text-sm">
-                            Al primo accesso è necessario scegliere una password sicura.
-                        </p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div class="space-y-2">
-                            <input 
-                                v-model="changePasswordForm.newPassword" 
-                                type="password" 
-                                placeholder="NUOVA PASSWORD"
-                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white font-black uppercase outline-none focus:border-chess-gold transition-all"
-                            />
-                            <input 
-                                v-model="changePasswordForm.confirmPassword" 
-                                type="password" 
-                                placeholder="CONFERMA PASSWORD"
-                                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white font-black uppercase outline-none focus:border-chess-gold transition-all"
-                            />
-                        </div>
-
-                        <p v-if="changePasswordError" class="text-red-500 text-[10px] font-black uppercase tracking-widest bg-red-500/10 py-2 rounded-lg">
-                            {{ changePasswordError }}
-                        </p>
-
-                        <button 
-                            @click="confirmPasswordChange"
-                            :disabled="!isPasswordValid || status === 'processing_pwd'"
-                            class="w-full py-4 bg-chess-gold text-black font-black uppercase rounded-xl enabled:hover:scale-[1.02] disabled:opacity-30 transition-all shadow-lg"
-                        >
-                            <span v-if="status === 'processing_pwd'" class="flex items-center justify-center gap-2">
-                                <div class="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-                                Aggiornamento...
-                            </span>
-                            <span v-else>Salva e Accedi</span>
-                        </button>
-                    </div>
-                </div>
-                -->
 
         <!-- STEP 2: CONSENSO LEGALE (Nuovo) -->
         <LegalConsentStep 
@@ -257,15 +151,9 @@ const memberData = ref(null)
 const errorMessage = ref('')
 const verifiedToken = ref('') // Salviamo il token validato per lo step finale
 
-const showAdminLogin = ref(false)
-const adminForm = ref({ username: '', password: '' })
-
 const asdStore = useAsdStore()
 
 const isButtonDisabled = computed(() => {
-    if(showAdminLogin.value) {
-        return status.value === 'processing' || !adminForm.value.username?.trim() || !adminForm.value.password?.trim()
-    }
   const minLength = useLongToken.value ? 9 : 6
   return status.value === 'processing' || manualToken.value.length < minLength
 })
@@ -378,14 +266,11 @@ const confirmActivation = async () => {
             }
         };
 
-        // Identifichiamo quale ID inviare
-        const targetId = memberData.value.id_membership || memberData.value.id_manager;
-
         // Chiamata finale che imposta status 'active' e salva legal_consent
         const data = await $fetch(`/api/asd/${asd_slug}/join`, {
             method: 'POST',
             body: { 
-                id: targetId,
+                id: memberData.value.id,
                 role: memberData.value.role,
                 t: verifiedToken.value,
                 legal_acceptance: legalPayload 
@@ -393,14 +278,11 @@ const confirmActivation = async () => {
         })
 
         // Salvataggio dati e permessi come nell'originale[cite: 1]
-        // --- AGGIORNAMENTO STORE PINIA ---
-        // Usiamo la nuova logica additiva
-        if (memberData.value.role === 'MANAGER') {
-            // Se è manager, usiamo la funzione additiva che gestisce anche il cookie
-            userStore.addManagerAccess(memberData.value, asd_slug)
-        } else {
-            // Se è socio semplice, aggiorniamo solo il profilo locale
+        if(memberData.value.asd_profile) {
             userStore.setAsdProfile(asd_slug, memberData.value.asd_profile)
+        }
+        if(memberData.value.permissions) {
+            userStore.setAuth(memberData.value.permissions)
         }
         
         status.value = 'success'
@@ -415,101 +297,8 @@ const confirmActivation = async () => {
     }
 }
 
-const handleAdminLogin = async () => {
-    status.value = 'processing'
-    errorMessage.value = ''
-
-    try {
-        const response = await $fetch('/api/auth/login', {
-            method: 'POST',
-            body: { 
-                username: adminForm.value.username,
-                password: adminForm.value.password 
-            }
-        })
-
-        if (response.must_change_password) {
-            // Qui potresti cambiare 'status' in un nuovo stato 'change_password'
-            // o aprire una modale dedicata
-            status.value = 'force_password_change';
-            return;
-        }
-
-        // L'admin riceve le sue permissions globali
-        userStore.setAdminAuth(response.permissions)
-        
-        // Salviamo un'identità fittizia o specifica per l'admin se necessario
-        memberData.value = { name: 'Amministratore', role: 'ADMIN' }
-        status.value = 'success'
-
-        setTimeout(() => skipToEvents(), 1500)
-    } catch (e) {
-        status.value = 'input'
-        errorMessage.value = 'Credenziali non valide.'
-    }
-}
-
 const skipToEvents = () => {
     navigateTo(`/${asd_slug}/events`)
-}
-
-
-const changePasswordForm = ref({ newPassword: '', confirmPassword: '' })
-const changePasswordError = ref('')
-
-// Validazione locale semplice
-const isPasswordValid = computed(() => {
-    const { newPassword, confirmPassword } = changePasswordForm.value
-    return newPassword.length >= 8 && newPassword === confirmPassword
-})
-
-/**
- * STEP 3: Conferma il cambio password (per ADMIN/MANAGER con credenziali)
- */
-const confirmPasswordChange = async () => {
-    status.value = 'processing_pwd'
-    changePasswordError.value = ''
-
-    try {
-        const response = await $fetch('/api/auth/update-password', {
-            method: 'PATCH',
-            body: {
-                username: adminForm.value.username,
-                oldPassword: adminForm.value.password, // Usiamo la password provvisoria appena inserita
-                newPassword: changePasswordForm.value.newPassword
-            }
-        })
-
-        // Se il cambio va a buon fine, salviamo i permessi e procediamo
-        userStore.setAuth(response.permissions)
-        memberData.value = { name: 'Amministratore', role: 'ADMIN' }
-        status.value = 'success'
-
-        setTimeout(() => skipToEvents(), 1500)
-    } catch (e) {
-        status.value = 'force_password_change'
-        changePasswordError.value = e.statusMessage || 'Errore durante l\'aggiornamento.'
-    }
-}
-
-
-
-/**
- * Gestisce il successo del cambio password inviato dal componente ChangePasswordInput
- */
-const handlePasswordChangeSuccess = (permissions) => {
-    changePasswordError.value = ''
-    status.value = 'processing' // Mostra un feedback di caricamento immediato
-
-    // Salviamo i permessi ricevuti nello store globale
-    userStore.setAdminAuth(permissions)
-    
-    // Configura l'identità dell'utente corrente
-    memberData.value = { name: 'Amministratore', role: 'ADMIN' }
-    
-    // Passa allo stato di successo e reindirizza
-    status.value = 'success'
-    setTimeout(() => skipToEvents(), 1500)
 }
 
 onMounted(async () => {

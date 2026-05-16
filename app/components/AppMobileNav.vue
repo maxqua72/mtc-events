@@ -42,7 +42,7 @@
 
     <NuxtLink v-if="asdSlug && !isMember && !isManager" :to="`/${asdSlug}/join`"
       class="flex flex-col items-center gap-1 text-white/50 w-full">
-      <Icon name="fa6-solid:id-card"  size="20" class="text-xl animate-pulse" />
+      <Icon name="fa6-solid:id-card"  size="20" class="text-xl" />
       <span class="text-[9px] font-bold uppercase italic tracking-tighter text-center leading-[1.1]">
         Sei<br />Socio?
       </span>

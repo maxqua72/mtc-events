@@ -7,8 +7,10 @@
 
 
     <div class="flex flex-1 w-full">
-
-      <AppSidebar v-if="isManager" />
+      
+        <AppSidebar v-if="isManager" />
+        
+      
 
       <main class="flex-1 px-4 pb-4 pt-4 md:p-10 max-w-7xl mx-auto w-full">
         <div class="md:hidden mb-2">
@@ -71,7 +73,8 @@ const currentSlug = computed(() => route.params.asd_slug)
 const asdInfo = computed(() => asdStore.info)
 
 const isManager = computed(() => {
-  const auth = userStore.auth
+  //const auth = userStore.auth
+  /*
   if (!auth) return false
 
   // Se è SuperAdmin ha poteri di gestione ovunque
@@ -80,6 +83,8 @@ const isManager = computed(() => {
   // Altrimenti controlliamo se lo slug attuale è nella sua lista di gestione
   const currentSlug = route.params.asd_slug
   return auth.managed_asds?.some(asd => asd.asd_slug === currentSlug)
+  */
+  return userStore.isManager(route.params.asd_slug)
 })
 
 // 2. Osserviamo la query di ricerca: quando cambia, eseguiamo la chiamata

@@ -17,10 +17,17 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // 1. Recuperiamo l'ASD per validare lo slug
+  const asd = await db.collection('associations').findOne({ slug: asd_slug });
+  if (!asd) throw createError({ statusCode: 404, statusMessage: 'ASD non trovata' });
+
   const collectionName = role === 'MANAGER' ? 'managers' : 'memberships';
 
   // Prepariamo il filtro di sicurezza: ID + Token
-  const filter: any = { _id: new ObjectId(id) };
+  const filter: any = { 
+    _id: new ObjectId(id),
+    association_id: asd._id // Fondamentale: l'ID deve appartenere a QUESTA ASD 
+  };
 
   if (role === 'MANAGER') {
     filter.manager_token = token; 

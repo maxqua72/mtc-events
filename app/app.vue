@@ -1,6 +1,7 @@
 <script setup>
 const userStore = useUserStore()
 const pwaStore = usePwaStore()
+const error = useError()
 
 if (import.meta.client) {
   // 1. Inizializza subito piattaforma e stato standalone
@@ -29,16 +30,23 @@ const handleVisibilityChange = () => {
       console.log('PWA riattivata: sincronizzazione dati globale...')
       
       // Questo comando di Nuxt rinfresca TUTTI i useFetch e useAsyncData 
-      // attivi nella pagina corrente
+      // attivi nella pagina 
+      // corrente
       refreshNuxtData()
       lastRefresh = now
     }
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Se al mount del client siamo su una rotta valida ma Nuxt è rimasto incastrato su un errore vecchio
+  if (error.value) {
+    console.log("🧹 Rilevato stato d'errore residuo, forzo il clear...");
+    clearError()
+  }
+
   // Carica i dati salvati nel localStorage all'avvio dell'app
-  userStore.initStore()
+  //await userStore.initStore()
 
   document.addEventListener('visibilitychange', handleVisibilityChange)
   // Opzionale: gestisce anche il ritorno online se cade la connessione

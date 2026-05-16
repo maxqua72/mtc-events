@@ -48,7 +48,14 @@
       </div>
     </div>
 
-    
+    <NuxtLink 
+      v-if="currentUser.role === 'GUEST' && info?.slug" 
+      :to="`/${info.slug}/join`"
+      class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md border border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all mr-4 text-xs font-medium tracking-wide"
+    >
+      <Icon name="fa6-solid:id-card" size="13" />
+      <span>Sei Socio?</span>
+    </NuxtLink>
 
     <div v-if="currentUser.role !== 'GUEST'"
       @click="showProfileModal = true"
@@ -128,32 +135,7 @@ const currentUser = computed(() => {
   const authData = userStore.auth // Dati di login (Admin/Manager) [cite: 2026-02-07]
   const profile = slug ? userStore.identities[slug] : null
 
-  /*
-  // 1. Caso ADMIN: Nome reale dallo store auth
-  if (authData?.is_admin === true || authData?.is_admin === "true") {
-    return { 
-      name: authData.name || 'Amministratore', 
-      role: 'ADMIN' 
-    }
-  }
-
-  // 2. Caso MANAGER: Nome reale dallo store auth
-  if (props.isManager && authData) {
-    return { 
-      name: authData.name || 'Manager', 
-      role: 'MANAGER' 
-    }
-  }
-
-  // 3. Caso SOCIO: Nome dalla collezione memberships [cite: 2026-02-21]
-  //const profile = slug ? userStore.identities[slug] : null
-  if (profile && profile.role !== 'GUEST') {
-    return {
-      name: profile.name, // Esempio: "Mario Rossi" [cite: 2026-02-21]
-      role: 'MEMBER'
-    }
-  }
-*/
+  
   // Dati base per tutti i ruoli loggati
   const baseData = {
     name: authData?.name || profile?.name || 'Utente',

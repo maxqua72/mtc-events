@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@vite-pwa/nuxt', '@nuxtjs/tailwindcss', '@nuxt/icon', '@pinia/nuxt', '@nuxt/image'],
+  modules: ['@vite-pwa/nuxt', '@nuxtjs/tailwindcss', '@nuxt/icon', '@pinia/nuxt', '@nuxt/image', 'nuxt-auth-utils'],
   image: {
     format: ['webp'],
     // Opzionale: definisci dimensioni standard per le tue card
@@ -24,6 +24,18 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Le chiavi qui dentro sono visibili solo Server-side
     mongodbUri: process.env.MONGODB_URI || 'mongodb://0.0.0.0:27017/mtc_events',
+
+    session: {
+      name: 'nuxt-session',
+      password: process.env.NUXT_SESSION_PASSWORD, // Deve essere di 32 caratteri
+      maxAge: 60 * 60 * 24 * 365, // 365 giorni in secondi
+      //maxAge: 60, // 10 secondi
+      rolling: true, // Estende la sessione ad ogni richiesta
+      cookie: {
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+      }
+    },
 
     // Variabili solo lato server (es. per inviare notifiche)
     firebaseServiceAccount: process.env.FIREBASE_SERVICE_ACCOUNT,
@@ -136,8 +148,8 @@ export default defineNuxtConfig({
         'bson',
         'mongodb-connection-string-url',
         '@mongodb-js/saslprep',
-        'resend',      
-        'date-fns'     
+        'resend',
+        'date-fns'
       ]
     }
   },
@@ -150,7 +162,7 @@ export default defineNuxtConfig({
       'google-gax',
       '@iconify/utils',
       'mongodb',
-      'resend'        
+      'resend'
     ]
   }
 })

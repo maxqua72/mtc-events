@@ -3,6 +3,8 @@ const props = defineProps({
   error: Object
 })
 
+const userStore = useUserStore()
+
 const handleRecover = () => {
   // Se l'errore è 401 (non loggato), puliamo tutto e torniamo in home
   // Inutile cercare di recuperare se non c'è il cookie
@@ -10,12 +12,18 @@ const handleRecover = () => {
     return clearError({ redirect: '/' })
   }
 
-  const auth = useCookie('user_auth').value
+  //const auth = useCookie('user_auth').value
+  const auth = userStore.auth
   
   // Se è un Manager/Admin (Cookie)
   if (auth && auth.managed_asds?.length > 0) {
     const firstSlug = auth.managed_asds[0].asd_slug
     return clearError({ redirect: `/${firstSlug}/manager/dashboard` })
+  }
+
+  // Se è l'Admin globale senza ASD specifiche assegnate
+  if (userStore.isAdmin) {
+    return clearError({ redirect: '/admin' }) // o la tua rotta admin principale
   }
 
   // Se è un Visitatore (LocalStorage)

@@ -5,7 +5,7 @@
     <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
       <div class="bg-chess-dark p-6 text-white flex flex-col items-center">
         <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-4 border border-white/20">
-          <Icon :name="roleIcon" size="32" class="text-chess-gold" />
+          <Icon :name="roleIcon" size="32" :class="(props.user.role === 'MANAGER')?'text-red-500':'text-chess-gold'"/>
         </div>
         <h3 class="text-xl font-black uppercase tracking-tight text-chess-gold">{{ user.name }} {{ user.surname }}</h3>
         <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">{{ roleLabel }}</p>
@@ -64,7 +64,7 @@ const roleLabel = computed(() => {
 
 const roleIcon = computed(() => {
   if (props.user.role === 'ADMIN') return 'fa6-solid:crown'
-  if (props.user.role === 'MANAGER') return 'fa6-solid:user-shield text-red-500'
+  if (props.user.role === 'MANAGER') return 'fa6-solid:user-shield'
   return 'fa6-solid:user'
 })
 

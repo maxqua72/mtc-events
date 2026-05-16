@@ -51,7 +51,7 @@ const status = ref('checking') // 'checking' | 'empty'
 onMounted(async () => {
   // 1. Aspettiamo un attimo per l'idratazione dello store (opzionale ma sicuro)
   await nextTick()
-  userStore.initStore()
+  await userStore.initStore()
 
   // 2. Controllo Staff (Admin/Manager)
   if (userStore.auth) {

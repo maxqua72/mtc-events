@@ -57,25 +57,22 @@ export default defineEventHandler(async (event) => {
       if (new Date(membership.expiry_date) < now) {
         throw createError({ statusCode: 403, statusMessage: 'Iscrizione scaduta.' })
       }
-
-      const maskedEmail = maskEmail(decrypt(membership.email))
-
       return {
-        id_membership: membership._id.toString(),
+        id: membership._id.toString(),
         name: membership.name,
-        email: maskedEmail,
+        email: membership.email,
         role: 'MEMBER',
         asd_profile: { 
-          id_membership: membership._id.toString(),
+          id: membership._id.toString(),
           name: membership.name,
-          email: maskedEmail,
+          email: membership.email,
           start_date: membership.start_date,
           expiry_date: membership.expiry_date,
           role: 'MEMBER' } // Questo è l'oggetto completo per userStore.setAsdProfile
       }
     }
   } else {
-    console.log('Token 9 caratteri ricevuto, cerchiamo nella collezione managers con:', { longTokenSearch, normalizedToken })
+    console.log('Token lungo ricevuto, cerchiamo nella collezione managers con:', { longTokenSearch, normalizedToken })
 
     // --- TENTATIVO B: MANAGER (Manager Token a 9 caratteri) ---
     // Cerchiamo il token nella collezione managers (assumendo che il campo sia 'manager_token')
@@ -95,72 +92,40 @@ export default defineEventHandler(async (event) => {
       // Chiamiamo internamente la logica dei permessi (o la duplichiamo per velocità)
       // In alternativa, facciamo un redirect interno o restituiamo il formato permissions.get.ts
       
-      //const permissions = await $fetch('/api/auth/permissions', { query: { email: user.email } })
-      const maskedEmail = maskEmail(user.email)
+      const permissions = await $fetch('/api/auth/permissions', { query: { email: user.email } })
 
       // Verifichiamo se l'utente è anche socio
       const membership = await db.collection('memberships').findOne({
         association_id: asd._id,
-        email: encrypt(user.email),
+        email: user.email,
         status: 'active'
       })  
-
-      // Restituiamo SOLO i dati sbloccati da QUESTO token
-      const asdProfile = {
-        id_manager: managerEntry._id.toString(),
-        id_membership: membership ? membership._id.toString() : null,
-        name: user.name,
-        email: maskedEmail,
-        role: 'MANAGER',
-        start_date: membership?.start_date || null,
-        expiry_date: membership?.expiry_date || null
-      }
-
-      // --- INIZIO LOGICA SESSIONE SICURA (IL "JOIN" 10/10) ---
-      
-      // 1. Recuperiamo la sessione esistente (se il manager gestisce già altre ASD)
-      const session = await getUserSession(event)
-      const sessuser = session.user as any
-      const currentManagedAsds = sessuser?.managed_asds || []
-
-      // 2. Aggiungiamo la nuova ASD evitando duplicati
-      const alreadyManaged = currentManagedAsds.some((a: any) => a.asd_slug === slug)
-      if (!alreadyManaged) {
-        currentManagedAsds.push({
-          asd_id: asd._id.toString(),
-          asd_slug: asd.slug,
-          asd_name: asd.name,
-          role: 'MANAGER'
-        })
-      }
-
-      // 3. SIGILLIAMO IL COOKIE CRITTOGRAFATO
-      // Questo è l'unico punto dove salviamo i permessi "forti"
-      await setUserSession(event, {
-        user: {
-          id: user._id.toString(),
+      if (membership) {
+        // Se è anche socio, possiamo arricchire i dati con il profilo ASD
+        const asdProfile = { 
+          id: membership._id.toString(),
+          name: membership.name,
+          email: membership.email,
+          start_date: membership.start_date,
+          expiry_date: membership.expiry_date,
+          role: 'MANAGER' }
+        return {
+          name: user.name,
           email: user.email,
-          is_admin: user.is_admin || false, // Se è anche admin globale lo scriviamo qui
-          managed_asds: currentManagedAsds
+          role: 'MANAGER',
+          id: managerEntry._id.toString(), // Serve per aggiornare il consenso legale
+          asd_profile: asdProfile, // Questo è l'oggetto completo per userStore.setAsdProfile
+          permissions: permissions // Questo è l'oggetto completo per userStore.setAuth
         }
-      })
 
-      // --- FINE LOGICA SESSIONE SICURA ---
+      }
 
       return {
-        id_manager: managerEntry._id.toString(),
-        id_membership: membership ? membership._id.toString() : null,
         name: user.name,
         email: user.email,
         role: 'MANAGER',
-        asd_profile: asdProfile,
-        // Dati per managed_asds (da aggiungere al cookie)
-        new_managed_asd: {
-          _id: asd._id.toString(),
-          asd_slug: asd.slug,
-          asd_name: asd.name,
-          role: 'MANAGER'
-        }
+        id: managerEntry._id.toString(), // Serve per aggiornare il consenso legale
+        permissions: permissions // Questo è l'oggetto completo per userStore.setAuth
       }
     }
   }
@@ -168,4 +133,16 @@ export default defineEventHandler(async (event) => {
   // Se nessuno dei due matchha
   throw createError({ statusCode: 403, statusMessage: 'Codice non valido o scaduto.' })
 
+  
+  // 4. Restituiamo solo i dati necessari allo store dell'utente
+  // Non restituiamo l'intero documento per privacy
+  /*
+  return {
+    name: membership.name,
+    email: membership.email,
+    member_code: membership.member_code,
+    start_date: membership.start_date,
+    expiry_date: membership.expiry_date,
+    role: 'MEMBER' // Identifichiamo l'utente come socio da ora in poi
+  }*/
 })

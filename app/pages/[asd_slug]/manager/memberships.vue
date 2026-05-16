@@ -2,11 +2,19 @@
 definePageMeta({ layout: 'default' })
 const route = useRoute()
 const { asd_slug } = route.params
+const userStore = useUserStore()
 
 // 1. Integrazione con il composable di ricerca
 const { searchQuery} = useSearch()
 
+// 🛡️ Calcoliamo se l'utente loggato è un Admin globale
+const isAdmin = computed(() => userStore.isAdmin || false)
+const isManagerOfAsd = computed(() => {
+  return userStore.isManagerOf(asd_slug)
+})
+const isReadOnlyAdmin = computed(() => isAdmin.value && !isManagerOfAsd.value)
 
+console.log(`[DEBUG] isAdmin: ${isAdmin.value} - isManagerOfAsd: ${isManagerOfAsd.value} - isReadOnlyAdmin: ${isReadOnlyAdmin.value}`)
 
 // Recuperiamo prima le info dell'ASD per avere l'ID
 const { data: asd } = await useFetch(`/api/asd/${asd_slug}`)
@@ -33,6 +41,7 @@ const selectedMember = ref(null)
 const isSending = ref(null) // Conterrà l'ID del membro in fase di invio
 
 const openModal = (member = null) => {
+  if (isReadOnlyAdmin.value) return // 🛡️ Blocco di sicurezza lato logica: l'admin non apre la modale
   selectedMember.value = member
   showModal.value = true
 }
@@ -41,11 +50,13 @@ const showPushModal = ref(false)
 const memberForPush = ref(null)
 
 const openPushModal = (member) => {
+  //if (isReadOnlyAdmin.value) return // 🛡️ Blocco di sicurezza
   memberForPush.value = member
   showPushModal.value = true
 }
 
 const deleteMember = async (id) => {
+  if (isReadOnlyAdmin.value) return // 🛡️ Blocco di sicurezza
   if (confirm('Rimuovere definitivamente questo socio?')) {
     await $fetch(`/api/manager/${asd_slug}/memberships/${id}`, { method: 'DELETE' })
     refresh()
@@ -56,6 +67,7 @@ const deleteMember = async (id) => {
 // Funzione per inviare l'email con il link di Join tramite Resend
 // Funzione per inviare l'email con gestione quote e coda
 const sendJoinLink = async (member, force = false) => {
+  //if (isAdmin.value) return // 🛡️ Blocco di sicurezza
   // Se non è una forzatura (secondo tentativo), chiedi conferma
   if (!force) {
     const confirmSend = confirm(`Inviare l'invito ufficiale a ${member.email}?`);
@@ -172,7 +184,7 @@ const sendTestPush = async (member) => {
           Trovati {{ filteredMembers.length }} soci su {{ members?.length }}
         </p>
       </div>
-      <button @click="openModal()"
+      <button @click="openModal()" v-if="!isReadOnlyAdmin"
         class="bg-chess-dark text-chess-gold px-5 py-2.5 rounded-lg text-[11px] font-black uppercase flex items-center gap-2">
         <Icon name="fa6-solid:user-plus" /> Nuovo Socio
       </button>
@@ -204,7 +216,12 @@ const sendTestPush = async (member) => {
               </span>
             </td>
             <td class="p-2 text-right space-x-2">
-              <div class="flex items-center justify-end gap-2">
+              <div v-if="isReadOnlyAdmin" class="flex justify-end items-center pr-2">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-wider bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200/60 select-none">
+                  Sola Lettura
+                </span>
+              </div>
+              <div v-else class="flex items-center justify-end gap-2">
                 <template v-if="m.is_email_pending">
                   <div
                     class="flex items-center gap-1.5 px-2 py-1 bg-orange-50 text-orange-600 rounded-md border border-orange-100 cursor-help"
