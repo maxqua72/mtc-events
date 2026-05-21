@@ -2,9 +2,13 @@
 import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 export default defineEventHandler(async (event) => {
+
+  console.log('============= [SYNC LEGAL START] =============');
+  console.log(`[DEBUG] process.cwd(): ${process.cwd()}`);
+  console.log(`[DEBUG] __dirname (se disponibile): ${typeof __dirname !== 'undefined' ? __dirname : 'N/A'}`);
+
   // 1. Recupero database e corpo della richiesta
   const db = await getDb()
   if (!db) throw createError({ statusCode: 500, statusMessage: 'Database non disponibile' });
@@ -12,131 +16,69 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { type, version } = body; // es: type: 'terms', version: '1.0'
 
+  console.log(`[DEBUG] Parametri ricevuti -> type: "${type}", version: "${version}"`);
+
   if (!type || !version) {
     throw createError({ statusCode: 400, statusMessage: 'Tipo documento e versione sono obbligatori' });
   }
 
-  // 2. Costruzione dei percorsi secondo la nuova struttura
-  // File atteso: public/legal/{type}/v{version_con_underscore}.pdf
-  const fileName = `${type}_v${version.replace(/\./g, '_')}.pdf`;
-  const relativePath = `/legal/${type}/${fileName}`;
-  const absolutePath = path.join(process.cwd(), 'public', relativePath);
+  // 2. Costruzione dei percorsi secondo la nuova struttura affiancata
+  const versionSlug = version.replace(/\./g, '_');
+  const pdfFileName = `${type}_v${versionSlug}.pdf`;
+  const htmlFileName = `${type}_v${versionSlug}.html`;
+
+  const relativePdfPath = `/legal/${type}/${pdfFileName}`;
+
+  // 🛡️ STRATEGIA DINAMICA PER I PERCORSI (Risolve il bug di .output)
+  const pathInRoot = path.join(process.cwd(), 'public', relativePdfPath);
+  const pathInOutput = path.join(process.cwd(), '.output', 'public', 'legal', type, pdfFileName);
+
+  //const absolutePdfPath = path.join(process.cwd(), 'public', relativePdfPath);
+  //const absoluteHtmlPath = path.join(process.cwd(), 'public', 'legal', type, htmlFileName);
+
+  let absolutePdfPath = '';
+  let absoluteHtmlPath = '';
+
+  // Controlliamo se esiste il file in .output/public (Produzione)
+  const existsInOutput = await fs.access(pathInOutput).then(() => true).catch(() => false);
+
+  if (existsInOutput) {
+    console.log(`[DEBUG] Ambiente di Produzione rilevato. Uso i file dentro .output/public`);
+    absolutePdfPath = pathInOutput;
+    absoluteHtmlPath = path.join(process.cwd(), '.output', 'public', 'legal', type, htmlFileName);
+  } else {
+    console.log(`[DEBUG] Ambiente Locale/Sviluppo rilevato. Uso i file dentro public/`);
+    absolutePdfPath = pathInRoot;
+    absoluteHtmlPath = path.join(process.cwd(), 'public', 'legal', type, htmlFileName);
+  }
+
+  // 🔍 LOG PERCORSI CALCOLATI: Vedrai l'esatta stringa che Node.js passa al sistema operativo
+  console.log(`[DEBUG] Percorso assoluto PDF atteso:  ${absolutePdfPath}`);
+  console.log(`[DEBUG] Percorso assoluto HTML atteso: ${absoluteHtmlPath}`);
 
   try {
-    // 3. Lettura del file fisico dal pacchetto di deploy
-    const fileBuffer = await fs.readFile(absolutePath);
-
-    // 4. Calcolo automatico dell'Hash SHA-256 (Impronta digitale)
+    // 3. Lettura del file PDF fisico e calcolo automatico dell'Hash SHA-256
+    console.log(`[SYNC LEGAL] Sincronizzazione documento legale: ${type} v${version}`);
+    const pdfBuffer = await fs.readFile(absolutePdfPath);
     const hashSum = createHash('sha256');
-    hashSum.update(fileBuffer);
+    hashSum.update(pdfBuffer);
     const calculatedHash = hashSum.digest('hex');
 
-    // 2. Estrazione Testo con PDF.js
-    const data = new Uint8Array(fileBuffer);
-    const loadingTask = pdfjs.getDocument({ 
-      data,
-      useSystemFonts: true,
-      disableFontFace: true 
-    });
-    
-    const pdf = await loadingTask.promise;
-    let fullText = '';
+    console.log(`[SYNC LEGAL] Hash calcolato: ${calculatedHash} per il file ${pdfFileName}`);
 
-    // Cicliamo su tutte le pagine
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      /*const textContent = await page.getTextContent();
-      
-      // Estraiamo le stringhe di testo
-      
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ');
-      */
-      // Invece di join(' '), usiamo una logica che preserva i ritorni a capo
-      const textContent = await page.getTextContent();
-
-      let pageText = '';
-
-      for (const item of textContent.items as any[]) {
-        // 1. Verifichiamo che l'item contenga effettivamente del testo
-        const hasText = typeof item.str === 'string';
-        
-        if (hasText) {
-          pageText += item.str;
-        }
-
-        // 2. Gestiamo il ritorno a capo (hasEOL è presente anche su oggetti non testuali)
-        if (item.hasEOL) {
-          pageText += '\n';
-        } else if (hasText && !item.str.endsWith(' ')) {
-          // Aggiungiamo lo spazio solo se l'item attuale è testo e non finisce già con uno spazio
-          pageText += ' ';
-        }
+    // 4. Lettura del file HTML pre-compilato (Sostituisce tutto il blocco PDF.js)
+    let contentHtml = '';
+    try {
+      contentHtml = await fs.readFile(absoluteHtmlPath, 'utf-8');
+    } catch (htmlError: any) {
+      if (htmlError.code === 'ENOENT') {
+        throw createError({
+          statusCode: 404,
+          statusMessage: `File HTML non trovato: /legal/${type}/${htmlFileName}. Assicurati di averlo inserito accanto al PDF.`
+        });
       }
-
-      // 3. Pulizia finale per evitare i "finti" a capo a metà frase
-      // Unisce le righe che non terminano con punteggiatura forte (., !, ?, :)
-      //const cleanedPageText = pageText
-      //  .replace(/([^\.\!\?\:\d])\n([a-z0-9])/gi, '$1 $2') // Incolla righe spezzate
-      //  .replace(/[ ]+/g, ' '); // Rimuove spazi doppi
-
-      const cleanedPageText = pageText
-        .split('\n')
-        .map((line, index, array) => {
-          const trimmedLine = line.trim();
-          if (!trimmedLine) return '';
-
-          // IDENTIFICAZIONE TITOLO:
-          // Una riga è un titolo se: inizia con un numero (1.), inizia con "Art.", 
-          // o è molto corta e non finisce con punteggiatura.
-          const isTitle = /^\d+\./.test(trimmedLine) || 
-                          /^Art\./i.test(trimmedLine) || 
-                          (trimmedLine.length < 50 && !/[.\!\?\:]/.test(trimmedLine));
-
-          const nextLine = array[index + 1]?.trim() || '';
-          
-          // Se la riga attuale NON è un titolo e NON finisce con punteggiatura forte, 
-          // e la riga successiva esiste, allora uniamo con uno spazio (senza \n)
-          if (!isTitle && trimmedLine.length > 0 && !/[.\!\?\:]/.test(trimmedLine) && nextLine.length > 0) {
-            return trimmedLine + ' ';
-          }
-
-          // In tutti gli altri casi (titoli o fine paragrafo), manteniamo il ritorno a capo
-          return trimmedLine + '\n';
-        })
-        .join('')
-        .replace(/[ ]+/g, ' ');
-
-
-      fullText += cleanedPageText + '\n';
+      throw htmlError;
     }
-
-    // 3. Formattazione HTML minimale
-    /*
-    const formattedHtml = fullText
-      .split('\n')
-      .map((line: string) => line.trim())
-      .filter((line: string) => line.length > 0)
-      .map((line: string) => `<p class="mb-3">${line}</p>`)
-      .join('');
-    */
-    const formattedHtml = fullText
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => {
-        // Applichiamo la stessa logica per il rendering visuale
-        const isTitle = /^\d+\./.test(line) || /^Art\./i.test(line) || (line.length < 50 && !/[.\!\?\:]/.test(line));
-        
-        if (isTitle) {
-          // Forza il titolo su una nuova riga con stile grassetto
-          return `<h3 class="font-bold text-chess-dark mt-6 mb-2 block w-full">${line}</h3>`;
-        }
-
-        return `<p class="mb-3 text-gray-700 leading-relaxed">${line}</p>`;
-      })
-      .join('');
 
     // 5. Operazione Atomica sul DB
     // Disattiviamo tutte le versioni precedenti dello stesso tipo
@@ -145,18 +87,22 @@ export default defineEventHandler(async (event) => {
       { $set: { is_active: false } }
     );
 
-    // Inseriamo il nuovo record con i metadati aggiornati
+    console.log(`[SYNC LEGAL] Versioni precedenti di ${type} disattivate.`);
+
+    // Inseriamo il nuovo record prendendo il codice HTML puro dal file fisco
     const newDoc = {
       type,
       version,
       hash: calculatedHash,
-      file_url: relativePath,
-      content_html: formattedHtml,
+      file_url: relativePdfPath,
+      content_html: contentHtml, // Contiene il codice HTML esatto che hai scritto nel file
       is_active: true,
       updated_at: new Date()
     };
 
     await db.collection('legal_documents').insertOne(newDoc);
+
+    console.log(`[SYNC LEGAL] Nuovo documento ${type} v${version} inserito con successo.`);
 
     return { 
       success: true, 
@@ -166,17 +112,21 @@ export default defineEventHandler(async (event) => {
     };
 
   } catch (error: any) {
-    // Se il file non esiste (es: non è stato incluso nel deploy)
+    // Se il file PDF originale non esiste
     if (error.code === 'ENOENT') {
       throw createError({ 
         statusCode: 404, 
-        statusMessage: `File non trovato: ${relativePath}. Assicurati di averlo inserito nel commit.` 
+        statusMessage: `File PDF non trovato: ${relativePdfPath}. Assicurati di averlo inserito nel commit.` 
       });
     }
-    console.log(error)
+    
+    // Se è un errore di Nuxt già creato, lo rilanciamo direttamente
+    if (error.statusCode) throw error;
+
+    console.error('[SYNC LEGAL ERROR]', error);
     throw createError({ 
       statusCode: 500, 
-      statusMessage: 'Errore interno durante la sincronizzazione' 
+      statusMessage: 'Errore interno durante la sincronizzazione dei documenti' 
     });
   }
 });

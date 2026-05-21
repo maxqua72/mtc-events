@@ -45,7 +45,7 @@
       <!-- Lista Documenti per consultazione rapida -->
       <div class="grid grid-cols-1 gap-2">
          <a v-for="(doc, key) in availableDocs" :key="key" 
-            :href="doc.url" target="_blank"
+            @click="openLegalModal(key)"
             class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 hover:border-chess-gold/50 transition-all group">
             <span class="text-[10px] text-white/60 uppercase font-black tracking-widest group-hover:text-white">
               {{ labelMap[key] }}
@@ -92,6 +92,13 @@
     <button @click="$emit('back')" class="text-white/20 text-[10px] uppercase font-black tracking-widest hover:text-white w-full">
       Torna all'inserimento codice
     </button>
+
+    <LegalPreviewModal 
+      v-model="isModalOpen"
+      :title="modalData.title"
+      :content="modalData.content"
+      :file-url="modalData.fileUrl"
+    />
   </div>
 </template>
 
@@ -103,9 +110,37 @@ defineProps({
 })
 defineEmits(['confirm', 'back'])
 const consent = ref(false)
+const isModalOpen = ref(false)
+const isModalLoading = ref(false)
+const modalData = ref({
+  title: '',
+  content: '',
+  fileUrl: ''
+})
 const labelMap = {
   terms: 'Termini e Condizioni',
   privacy: 'Privacy Policy',
   cookies: 'Cookie Policy'
+}
+// Funzione reattiva per pescare l'HTML dal database all'apertura del modal
+const openLegalModal = async (type) => {
+  if (isModalLoading.value) return
+  
+  isModalLoading.value = true
+  try {
+    const data = await $fetch(`/api/legal/${type}`)
+    
+    modalData.value = {
+      title: labelMap[type],
+      content: data.content,
+      fileUrl: data.fileUrl
+    }
+    
+    isModalOpen.value = true
+  } catch (error) {
+    console.error(`Impossibile caricare il documento ${type}:`, error)
+  } finally {
+    isModalLoading.value = false
+  }
 }
 </script>

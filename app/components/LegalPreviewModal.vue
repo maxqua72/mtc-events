@@ -9,11 +9,8 @@
         
         <!-- Header: Stile Chess Dark -->
         <div class="bg-chess-dark p-8 text-white flex flex-col items-center relative">
-          <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-4 border border-white/20">
-            <Icon name="fa6-solid:file-shield" size="28" class="text-chess-gold" />
-          </div>
-          <h3 class="text-xl font-black uppercase tracking-tight text-chess-gold">Anteprima Legale</h3>
-          <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50 mt-1">{{ title }}</p>
+          
+          <p class="text-[14px] font-bold uppercase tracking-[0.2em] mt-1 text-chess-gold">{{ title }}</p>
           
           <!-- Pulsante chiusura rapida in alto a destra -->
           <button @click="close" class="absolute top-6 right-6 text-white/30 hover:text-chess-gold transition-colors">
@@ -24,7 +21,7 @@
         <!-- Body: Rendering HTML (Simulazione PWA) -->
         <div class="flex-1 overflow-y-auto p-8 bg-gray-50/50">
 
-          <div v-if="fileUrl" class="mb-6 flex justify-center">
+          <div v-if="fileUrl" class="mb-4 flex justify-center">
             <a 
               :href="fileUrl" 
               target="_blank"
