@@ -42,6 +42,7 @@ const form = ref({
 })
 
 // Inizializzazione
+/*
 onMounted(() => {
   if (props.asd) {
     form.value = {
@@ -55,7 +56,7 @@ onMounted(() => {
     icon192Preview.value = props.asd.icon_192_url
     icon180Preview.value = props.asd.icon_180_url
   }
-})
+})*/
 
 // Generazione automatica slug (solo in creazione)
 const updateSlug = () => {
@@ -213,9 +214,64 @@ const save = async () => {
   }
 }
 
-// Se i soci vengono disattivati, disattiva automaticamente anche la biblioteca
+// Flag di controllo per bloccare i watch concatenati durante il caricamento dei dati dal DB
+const isInitializing = ref(false)
+
+watch(() => props.asd, (newAsd) => {
+  // Attiviamo il blocco dell'inizializzazione
+  isInitializing.value = true
+  console.log('🔍 [MODALE] Prop ASD ricevuta:', JSON.stringify(newAsd))
+  
+  if (newAsd) {
+    // Modalità EDIT: mappiamo i dati reali dal DB
+    form.value = {
+      ...newAsd,
+      has_members: newAsd.has_members !== undefined ? newAsd.has_members : true,
+      has_library: newAsd.has_library !== undefined ? newAsd.has_library : false
+    }
+    console.log('✍️ [MODALE] Form inizializzato (Edit):', JSON.stringify(form.value))
+    logoPreview.value = newAsd.logo_url || ''
+    icon512Preview.value = newAsd.icon_512_url || ''
+    icon192Preview.value = newAsd.icon_192_url || ''
+    icon180Preview.value = newAsd.icon_180_url || ''
+  } else {
+    // Modalità CREAZIONE: reset completo ai valori di fabbrica
+    form.value = {
+      name: '',
+      slug: '',
+      theme_color: '#1a1a1a',
+      logo_url: '',
+      icon_512_url: '',
+      icon_192_url: '',
+      icon_180_url: '',
+      has_members: true,
+      has_library: false
+    }
+    logoPreview.value = ''
+    icon512Preview.value = ''
+    icon192Preview.value = ''
+    icon180Preview.value = ''
+    console.log('✍️ [MODALE] Form inizializzato (Creazione)')
+  }
+
+  // Rilasciamo il blocco subito dopo il ciclo di rendering di Vue
+  nextTick(() => {
+    isInitializing.value = false
+    console.log('🔓 [MODALE] Stato isInitializing resettato a FALSE')
+  })
+}, { immediate: true, deep: true })
+
+// Gestione dipendenza moduli: scatta SOLO se l'utente clicca sul toggle a schermo
 watch(() => form.value.has_members, (newHasMembers) => {
+  // Se stiamo caricando i dati dal DB, non fare nulla e mantieni il valore originale
+  console.log(`⚡ [MODALE] Intercettato cambio has_members -> ${newHasMembers}. Initializing è: ${isInitializing.value}`)
+  if (isInitializing.value) {
+    console.log('🛑 [MODALE] Watch interrotto perché isInitializing è TRUE')
+    return
+  }
+
   if (!newHasMembers) {
+    console.log('📉 [MODALE] Soci disattivati. Spengo anche la biblioteca.')
     form.value.has_library = false
   }
 })

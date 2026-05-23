@@ -28,6 +28,8 @@ export default defineEventHandler(async (event) => {
         icon_192_url: 1,
         icon_180_url: 1,
         created_at: 1,
+        has_members: 1,
+        has_library: 1,
         // Mappiamo i dettagli degli utenti trovati
         managers: {
           $map: {

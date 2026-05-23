@@ -94,7 +94,11 @@ const closeEditModal = () => {
         </div>
 
         <Teleport to="body">
-            <AsdModal v-if="showAsdModal" :asd="selectedAsd" @close="showAsdModal = false"
+            <AsdModal 
+                v-if="showAsdModal" 
+                :key="selectedAsd?._id || 'new'"
+                :asd="selectedAsd" 
+                @close="showAsdModal = false"
                 @save="refresh(); showAsdModal = false" />
 
             <ManagerModal v-if="showManagerModal" :asd="asdForManager" @close="showManagerModal = false"
