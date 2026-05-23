@@ -36,13 +36,20 @@ const form = ref({
   logo_url: '',
   icon_512_url: '',
   icon_192_url: '',
-  icon_180_url: ''
+  icon_180_url: '',
+  has_members: true,    // Opzione 1: Abilita gestione soci (default true)
+  has_library: false    // Opzione 2: Abilita gestione biblioteca (default false)
 })
 
 // Inizializzazione
 onMounted(() => {
   if (props.asd) {
-    form.value = { ...props.asd }
+    form.value = {
+      ...props.asd,
+      // Fallback booleani se l'ASD sul DB non ha ancora questi campi
+      has_members: props.asd.has_members !== undefined ? props.asd.has_members : true,
+      has_library: props.asd.has_library !== undefined ? props.asd.has_library : false
+    }
     logoPreview.value = props.asd.logo_url
     icon512Preview.value = props.asd.icon_512_url
     icon192Preview.value = props.asd.icon_192_url
@@ -97,7 +104,7 @@ const handleFileChange = async (e, type) => {
 
   // Crea un URL temporaneo per vedere l'immagine subito
   const url = URL.createObjectURL(file)
-  
+
   if (type === 'logo') { selectedLogo.value = file; logoPreview.value = url }
   if (type === '512') { selected512.value = file; icon512Preview.value = url }
   if (type === '192') { selected192.value = file; icon192Preview.value = url }
@@ -124,7 +131,7 @@ const save = async () => {
     // 1. Salvataggio dati ASD (Nome, Slug, Colore)
     const method = props.asd ? 'PUT' : 'POST'
     const url = props.asd ? `/api/admin/associations/${props.asd._id}` : '/api/admin/associations'
-    
+
     const savedAsd = await $fetch(url, {
       method,
       body: form.value
@@ -160,7 +167,7 @@ const save = async () => {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('name', isMainLogo ? `LOGO_${targetSlug}` : `ICON_${suffix}_${targetSlug}`)
-      
+
       // Distinguiamo nei metadati
       if (isMainLogo) {
         formData.append('is_system_logo', 'true')
@@ -169,9 +176,9 @@ const save = async () => {
         formData.append('icon_size', suffix) // es: '512', '192', '180'
       }
 
-      return await $fetch(`/api/manager/${targetSlug}/resources`, { 
-        method: 'POST', 
-        body: formData 
+      return await $fetch(`/api/manager/${targetSlug}/resources`, {
+        method: 'POST',
+        body: formData
       })
     }
 
@@ -197,7 +204,7 @@ const save = async () => {
     if (Object.keys(updates).length > 0) {
       await $fetch(`/api/admin/associations/${asdId}`, { method: 'PUT', body: updates })
     }
-    
+
     emit('save')
   } catch (e) {
     alert("Errore durante il salvataggio: " + e.statusMessage)
@@ -205,38 +212,42 @@ const save = async () => {
     isSubmitting.value = false
   }
 }
+
+// Se i soci vengono disattivati, disattiva automaticamente anche la biblioteca
+watch(() => form.value.has_members, (newHasMembers) => {
+  if (!newHasMembers) {
+    form.value.has_library = false
+  }
+})
 </script>
 
 <template>
   <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-chess-dark/80 backdrop-blur-sm" @click="$emit('close')"></div>
 
-    <div class="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-      
-      <div class="bg-chess-dark p-6 text-white flex justify-between items-center">
+    <div
+      class="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] flex flex-col">
+
+      <div class="bg-chess-dark p-6 text-white flex justify-between items-center shrink-0">
         <div>
           <h3 class="text-xl font-black uppercase tracking-tight">
             {{ asd ? 'Modifica ASD' : 'Nuova Associazione' }}
           </h3>
-          <p class="text-chess-gold text-[10px] font-bold uppercase tracking-widest mt-1">Configurazione MANAGER Piattaforma</p>
+          <p class="text-chess-gold text-[10px] font-bold uppercase tracking-widest mt-1">Configurazione MANAGER
+            Piattaforma</p>
         </div>
         <button @click="$emit('close')" class="text-white/50 hover:text-white transition-colors">
           <Icon name="fa6-solid:xmark" size="20" />
         </button>
       </div>
 
-      <form @submit.prevent="save" class="p-8 space-y-6">
-        
+      <form @submit.prevent="save" class="p-8 space-y-6 overflow-y-auto flex-1">
+
         <div class="space-y-2">
           <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Nome Associazione</label>
-          <input 
-            v-model="form.name" 
-            @input="updateSlug"
-            type="text" 
-            required
+          <input v-model="form.name" @input="updateSlug" type="text" required
             placeholder="Esempio: Circolo Scacchistico"
-            class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-chess-dark focus:ring-2 focus:ring-chess-gold outline-none font-bold"
-          />
+            class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-chess-dark focus:ring-2 focus:ring-chess-gold outline-none font-bold" />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -244,31 +255,73 @@ const save = async () => {
             <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">URL Slug (ID)</label>
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-xs">/</span>
-              <input 
-                v-model="form.slug" 
-                type="text" 
-                required
-                :disabled="!!asd"
-                class="w-full bg-gray-50 border border-gray-200 rounded-lg pl-6 pr-4 py-3 text-chess-dark font-mono text-xs focus:ring-2 focus:ring-chess-gold outline-none disabled:opacity-50"
-              />
+              <input v-model="form.slug" type="text" required :disabled="!!asd"
+                class="w-full bg-gray-50 border border-gray-200 rounded-lg pl-6 pr-4 py-3 text-chess-dark font-mono text-xs focus:ring-2 focus:ring-chess-gold outline-none disabled:opacity-50" />
             </div>
           </div>
-          
+
           <div class="space-y-2">
             <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest">Colore Sociale</label>
             <div class="flex gap-2">
-                <input v-model="form.theme_color" type="color" class="h-10 w-12 rounded border border-gray-200 cursor-pointer bg-white p-1" />
-                <input v-model="form.theme_color" type="text" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono font-bold outline-none uppercase" />
+              <input v-model="form.theme_color" type="color"
+                class="h-10 w-12 rounded border border-gray-200 cursor-pointer bg-white p-1" />
+              <input v-model="form.theme_color" type="text"
+                class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono font-bold outline-none uppercase" />
             </div>
+          </div>
+        </div>
+
+        <!-- OPZIONI DI CONFIGURAZIONE -->
+        <div class="pt-4 border-t border-gray-100 space-y-4">
+          <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest block">Moduli e
+            Funzionalità Attive</label>
+
+          <div class="space-y-3">
+            <label
+              class="flex items-start justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50 cursor-pointer hover:bg-gray-50 transition-colors">
+              <div class="space-y-0.5 pr-4">
+                <span class="text-xs font-bold text-chess-dark block">Gestione Tesserati / Soci</span>
+                <span class="text-[10px] text-gray-400 block leading-tight">Abilita il flusso di riconoscimento soci e
+                  mostra l'opzione "Sei Socio?" nel frontend dell'applicazione.</span>
+              </div>
+              <input type="checkbox" v-model="form.has_members" class="sr-only peer" />
+              <div
+                class="relative w-9 h-5 shrink-0 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-chess-dark">
+              </div>
+            </label>
+
+            <label class="flex items-start justify-between p-3 rounded-xl border transition-colors select-none" :class="form.has_members
+              ? 'border-gray-100 bg-gray-50/50 cursor-pointer hover:bg-gray-50'
+              : 'border-gray-100 bg-gray-100/50 opacity-40 cursor-not-allowed'">
+              <div class="space-y-0.5 pr-4">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-chess-dark block">Modulo Biblioteca & Prestiti</span>
+                  <span v-if="!form.has_members"
+                    class="text-[9px] bg-chess-chocolate/10 text-chess-chocolate font-black uppercase px-1.5 py-0.5 rounded">
+                    Richiede Opzione Soci
+                  </span>
+                </div>
+                <span class="text-[10px] text-gray-400 block leading-tight">
+                  Attiva il catalogo libri interno. I soci registrati potranno visualizzare e richiedere in prestito i
+                  libri dell'ASD.
+                </span>
+              </div>
+              <input type="checkbox" v-model="form.has_library" class="sr-only peer" />
+              <div
+                class="relative w-9 h-5 shrink-0 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-chess-dark">
+              </div>
+            </label>
           </div>
         </div>
 
         <!-- LOGO ASSOCIAZIONE-->
         <div class="pt-4 border-t border-gray-100 space-y-4">
-          <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest block">Logo Associazione</label>
-          
+          <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest block">Logo
+            Associazione</label>
+
           <div class="flex items-center gap-5">
-            <div class="w-20 h-20 shrink-0 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden p-2 relative shadow-inner">
+            <div
+              class="w-20 h-20 shrink-0 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden p-2 relative shadow-inner">
               <img v-if="logoPreview" :src="logoPreview" class="w-full h-full object-contain" />
               <Icon v-else name="fa6-solid:image" size="24" class="text-gray-200" />
             </div>
@@ -278,71 +331,82 @@ const save = async () => {
                 class="w-full flex items-center justify-center gap-2 py-2.5 bg-white border border-gray-200 rounded-lg text-[10px] font-black uppercase text-chess-dark hover:bg-gray-50 transition-colors shadow-sm">
                 <Icon name="fa6-solid:upload" size="12" /> Seleziona Logo
               </button>
-              <input type="text" v-model="form.logo_url" placeholder="O incolla URL..." 
+              <input type="text" v-model="form.logo_url" placeholder="O incolla URL..."
                 class="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5 text-[10px] font-mono outline-none" />
             </div>
           </div>
-          
-          <input type="file" ref="fileInputLogo" class="hidden" accept="image/*" @change="e => handleFileChange(e,'logo')" />
+
+          <input type="file" ref="fileInputLogo" class="hidden" accept="image/*"
+            @change="e => handleFileChange(e, 'logo')" />
         </div>
-      
+
         <!-- ICONE PER PWA-->
-      
-      <div class="pt-4 border-t border-gray-100 space-y-6">
-        <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest block">Dimensioni Reali Icone PWA</label>
 
-        <div class="flex flex-wrap items-end gap-8 overflow-x-auto pb-4">
-          
-          <div class="space-y-2 flex flex-col items-center">
-            <div 
-              class="bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm transition-all"
-              style="width: 128px; height: 128px;" 
-            >
-              <img v-if="icon512Preview || form.icon_512_url" :src="icon512Preview || form.icon_512_url" class="w-full h-full object-cover" />
-              <span v-else class="text-[10px] font-bold text-gray-300">512px</span>
-            </div>
-            <button type="button" @click="fileInput512.click()" class="text-[8px] font-black uppercase bg-white border border-gray-200 px-3 py-1 rounded-full hover:bg-gray-50">Upload 512</button>
-            <p v-if="errors['512']" class="text-[9px] font-bold text-red-500 animate-pulse text-center">
-              {{ errors['512'] }}
-            </p>
-            <input type="file" ref="fileInput512" class="hidden" accept="image/png" @change="e => handleFileChange(e, '512')" />
-          </div>
+        <div class="pt-4 border-t border-gray-100 space-y-6">
+          <label class="text-[11px] font-black text-chess-chocolate uppercase tracking-widest block">Dimensioni Reali
+            Icone PWA</label>
 
-          <div class="space-y-2 flex flex-col items-center">
-            <div 
-              class="bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm"
-              style="width: 48px; height: 48px;" 
-            >
-              <img v-if="icon192Preview || form.icon_192_url" :src="icon192Preview || form.icon_192_url" class="w-full h-full object-cover" />
-              <span v-else class="text-[8px] font-bold text-gray-300">192</span>
-            </div>
-            <button type="button" @click="fileInput192.click()" class="text-[8px] font-black uppercase bg-white border border-gray-200 px-3 py-1 rounded-full hover:bg-gray-50">Upload 192</button>
-            <p v-if="errors['192']" class="text-[9px] font-bold text-red-500 animate-pulse text-center">
-              {{ errors['192'] }}
-            </p>
-            <input type="file" ref="fileInput192" class="hidden" accept="image/png" @change="e => handleFileChange(e, '192')" />
-          </div>
+          <div class="flex flex-wrap items-end gap-8 overflow-x-auto pb-4">
 
-          <div class="space-y-2 flex flex-col items-center">
-            <div 
-              class="bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm"
-              style="width: 45px; height: 45px;" 
-            >
-              <img v-if="icon180Preview || form.icon_180_url" :src="icon180Preview || form.icon_180_url" class="w-full h-full object-cover" />
-              <span v-else class="text-[8px] font-bold text-gray-300">180</span>
+            <div class="space-y-2 flex flex-col items-center">
+              <div
+                class="bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm transition-all"
+                style="width: 128px; height: 128px;">
+                <img v-if="icon512Preview || form.icon_512_url" :src="icon512Preview || form.icon_512_url"
+                  class="w-full h-full object-cover" />
+                <span v-else class="text-[10px] font-bold text-gray-300">512px</span>
+              </div>
+              <button type="button" @click="fileInput512.click()"
+                class="text-[8px] font-black uppercase bg-white border border-gray-200 px-3 py-1 rounded-full hover:bg-gray-50">Upload
+                512</button>
+              <p v-if="errors['512']" class="text-[9px] font-bold text-red-500 animate-pulse text-center">
+                {{ errors['512'] }}
+              </p>
+              <input type="file" ref="fileInput512" class="hidden" accept="image/png"
+                @change="e => handleFileChange(e, '512')" />
             </div>
-            <button type="button" @click="fileInput180.click()" class="text-[8px] font-black uppercase bg-white border border-gray-200 px-3 py-1 rounded-full hover:bg-gray-50">Upload 180</button>
-            <p v-if="errors['180']" class="text-[9px] font-bold text-red-500 animate-pulse text-center">
-              {{ errors['180'] }}
-            </p>
-            <input type="file" ref="fileInput180" class="hidden" accept="image/png" @change="e => handleFileChange(e, '180')" />
+
+            <div class="space-y-2 flex flex-col items-center">
+              <div
+                class="bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm"
+                style="width: 48px; height: 48px;">
+                <img v-if="icon192Preview || form.icon_192_url" :src="icon192Preview || form.icon_192_url"
+                  class="w-full h-full object-cover" />
+                <span v-else class="text-[8px] font-bold text-gray-300">192</span>
+              </div>
+              <button type="button" @click="fileInput192.click()"
+                class="text-[8px] font-black uppercase bg-white border border-gray-200 px-3 py-1 rounded-full hover:bg-gray-50">Upload
+                192</button>
+              <p v-if="errors['192']" class="text-[9px] font-bold text-red-500 animate-pulse text-center">
+                {{ errors['192'] }}
+              </p>
+              <input type="file" ref="fileInput192" class="hidden" accept="image/png"
+                @change="e => handleFileChange(e, '192')" />
+            </div>
+
+            <div class="space-y-2 flex flex-col items-center">
+              <div
+                class="bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm"
+                style="width: 45px; height: 45px;">
+                <img v-if="icon180Preview || form.icon_180_url" :src="icon180Preview || form.icon_180_url"
+                  class="w-full h-full object-cover" />
+                <span v-else class="text-[8px] font-bold text-gray-300">180</span>
+              </div>
+              <button type="button" @click="fileInput180.click()"
+                class="text-[8px] font-black uppercase bg-white border border-gray-200 px-3 py-1 rounded-full hover:bg-gray-50">Upload
+                180</button>
+              <p v-if="errors['180']" class="text-[9px] font-bold text-red-500 animate-pulse text-center">
+                {{ errors['180'] }}
+              </p>
+              <input type="file" ref="fileInput180" class="hidden" accept="image/png"
+                @change="e => handleFileChange(e, '180')" />
+            </div>
+
           </div>
 
         </div>
-        
-      </div>
 
-      <!-- BOTTONI -->
+        <!-- BOTTONI -->
 
         <div class="pt-4 flex gap-3">
           <button type="button" @click="$emit('close')"

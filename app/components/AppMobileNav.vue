@@ -25,7 +25,7 @@
       </span>
     </NuxtLink>
 
-    <NuxtLink v-if="asdSlug && isManager" :to="`/${asdSlug}/manager/memberships`"
+    <NuxtLink v-if="asdSlug && isManager && hasMembers" :to="`/${asdSlug}/manager/memberships`"
       class="flex flex-col items-center gap-1 text-white/50 w-full" active-class="!text-chess-gold">
       <Icon name="fa6-solid:users-rectangle" size="20" />
       <span class="text-[9px] font-bold uppercase tracking-tighter">Soci</span>
@@ -40,7 +40,7 @@
       <span class="text-[9px] font-black uppercase tracking-tighter">Installa</span>
     </button>
 
-    <NuxtLink v-if="asdSlug && !isMember && !isManager" :to="`/${asdSlug}/join`"
+    <NuxtLink v-if="asdSlug && !isMember && !isManager && hasMembers" :to="`/${asdSlug}/join`"
       class="flex flex-col items-center gap-1 text-white/50 w-full">
       <Icon name="fa6-solid:id-card"  size="20" class="text-xl" />
       <span class="text-[9px] font-bold uppercase italic tracking-tighter text-center leading-[1.1]">
@@ -55,7 +55,8 @@ import { useUserStore } from '~/stores/user'
 
 
 const props = defineProps({
-  isManager: Boolean
+  isManager: Boolean,
+  hasMembers: { type: Boolean, default: true }
 })
 
 const route = useRoute()

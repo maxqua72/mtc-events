@@ -39,6 +39,9 @@ const form = ref({
     registration_sections: []
 })
 
+// Stato per salvare la fotografia iniziale del form
+const initialFormSnapshot = ref('')
+
 // Stato locale per l'inserimento rapido di una sottosezione
 const newSection = ref({
     name: '',
@@ -77,6 +80,21 @@ watch(() => props.event, (newVal) => {
         }
     }
 }, { immediate: true, deep: true })
+
+// Un piccolo watch separato che scatta UNA SOLA VOLTA 
+// quando il form viene popolato dal tuo watch principale
+const unwatchSnapshot = watch(
+    () => form.value,
+    (newFormVal) => {
+        // Se il form è stato popolato (es. ha preso il titolo o altri dati dal backend, oppure è rimasto vuoto per un nuovo evento)
+        if (newFormVal.title || props.event?._id || initialFormSnapshot.value === '') {
+            initialFormSnapshot.value = JSON.stringify(newFormVal)
+            // Smettiamo di osservare per non sovrascrivere lo stato iniziale mentre l'utente digita
+            unwatchSnapshot() 
+        }
+    },
+    { deep: true }
+)
 
 const categories = ['Torneo', 'Gioco Libero', 'Corso', 'Altro']
 
@@ -236,6 +254,17 @@ const addRegistrationSection = () => {
 const removeRegistrationSection = (index) => {
     form.value.registration_sections.splice(index, 1)
 }
+
+// Computed che calcola se il form è cambiato rispetto alla fotografia iniziale
+const isDirty = computed(() => {
+    if (!initialFormSnapshot.value) return false
+    return initialFormSnapshot.value !== JSON.stringify(form.value)
+})
+
+// Esponiamo isDirty al componente padre (la pagina Nuxt)
+defineExpose({
+    isDirty
+})
 
 </script>
 

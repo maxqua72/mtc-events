@@ -47,7 +47,9 @@
       </main>
     </div>
 
-    <AppMobileNav :isManager="isManager" />
+    <AppMobileNav 
+      :isManager="isManager" 
+      :hasMembers="asdInfo?.has_members !== false"/>
 
     <IosInstallModal 
       v-if="pwaStore.showInstallGuidance" 
