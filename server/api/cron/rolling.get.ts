@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Eseguiamo il task Nitro internamente
-  const result = await runTask('events:rolling')
+  const result = await runTask('generators/rolling')
   
   return { 
     success: true, 

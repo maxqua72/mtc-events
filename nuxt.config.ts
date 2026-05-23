@@ -151,6 +151,12 @@ export default defineNuxtConfig({
         'resend',
         'date-fns'
       ]
+    },
+    tasks: {
+      'generators/rolling': {
+        handler: './server/tasks/generators/rolling.ts',
+        description: 'Generazione notturna automatica degli eventi ricorrenti'
+      }
     }
   },
   // Importante per le icone: forziamo il build locale
