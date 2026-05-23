@@ -20,6 +20,8 @@ const form = ref({
     start_time: '',
     end_time: '',
     registration_time: '',
+    // Programma dettagliato
+    program: [],
     // Location
     location: '',
     address: '',
@@ -33,7 +35,22 @@ const form = ref({
     // Link
     link_registration: '',
     link_flyer: '',
-    circuit: 'none'
+    circuit: 'none',
+    registration_sections: []
+})
+
+// Stato locale per l'inserimento rapido di una sottosezione
+const newSection = ref({
+    name: '',
+    link: ''
+})
+
+// Stato locale per l'inserimento di un nuovo slot nel programma
+const newSchedule = ref({
+    date: '',
+    start_time: '',
+    end_time: '',
+    description: ''
 })
 
 const showPicker = ref(false)
@@ -46,7 +63,17 @@ watch(() => props.event, (newVal) => {
             ...newVal,
             start_date: newVal.start_date?.$date ? newVal.start_date.$date.split('T')[0] : (newVal.start_date?.split?.('T')[0] || ''),
             end_date: newVal.end_date?.$date ? newVal.end_date.$date.split('T')[0] : (newVal.end_date?.split?.('T')[0] || ''),
-            registration_time: newVal.registration_time?.$date ? newVal.registration_time.$date.split('T')[0] : (newVal.registration_time?.split?.('T')[0] || '')
+            registration_time: newVal.registration_time?.$date ? newVal.registration_time.$date.split('T')[0] : (newVal.registration_time?.split?.('T')[0] || ''),
+            // Assicuriamoci che program sia sempre un array se presente sul DB o inizializzato vuoto
+            // Normalizziamo le date all'interno del programma per l'input di tipo HTML <input type="date">
+            program: Array.isArray(newVal.program)
+                ? newVal.program.map(item => ({
+                    ...item,
+                    date: item.date?.$date ? item.date.$date.split('T')[0] : (item.date?.split?.('T')[0] || '')
+                }))
+                : [],
+            // Carica le sezioni se esistono nel DB, altrimenti array vuoto
+            registration_sections: Array.isArray(newVal.registration_sections) ? [...newVal.registration_sections] : []
         }
     }
 }, { immediate: true, deep: true })
@@ -133,6 +160,83 @@ const uiTexts = computed(() => {
         saveLabel: isNew.value ? 'Salva Evento' : ' Salva modifiche'
     }
 })
+
+// Funzioni per la gestione del Programma
+const addScheduleItem = () => {
+    if (!newSchedule.value.date || !newSchedule.value.start_time || !newSchedule.value.description.trim()) {
+        alert('Data, Ora di Inizio e Descrizione sono obbligatorie per aggiungere un appuntamento.')
+        return
+    }
+
+    // Aggiunge l'elemento all'array del form
+    form.value.program.push({
+        date: newSchedule.value.date,
+        start_time: newSchedule.value.start_time,
+        end_time: newSchedule.value.end_time || null,
+        description: newSchedule.value.description.trim()
+    })
+
+    // Ordina automaticamente il programma per data e ora di inizio
+    sortProgram()
+
+    // Reset del form di inserimento rapido
+    newSchedule.value = {
+        date: form.value.start_date || '', // Pre-popola con la data di inizio evento per comodità
+        start_time: '',
+        end_time: '',
+        description: ''
+    }
+}
+
+const removeScheduleItem = (index) => {
+    form.value.program.splice(index, 1)
+}
+
+const sortProgram = () => {
+    form.value.program.sort((a, b) => {
+        const dateTimeA = new Date(`${a.date}T${a.start_time}:00.000Z`)
+        const dateTimeB = new Date(`${b.date}T${b.start_time}:00.000Z`)
+        return dateTimeA - dateTimeB
+    })
+}
+
+// Funzione helper per formattare le date nel riepilogo del programma (es. Sab 3/5)
+const formatDateLabel = (dateStr) => {
+    if (!dateStr) return ''
+
+    // Per sicurezza, se è una stringa YYYY-MM-DD pura, forziamo il mezzogiorno UTC prima di passarlo al costruttore Date
+    const normalizedDate = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00.000Z`
+    const d = new Date(normalizedDate)
+
+    const giornoSettimana = d.getUTCDay()
+    const giornoMese = d.getUTCDate()
+    const mese = d.getUTCMonth() + 1
+
+    const giorni = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+    return `${giorni[giornoSettimana]} ${giornoMese}/${mese}`
+}
+
+
+// AGGIUNTA: Funzioni per gestire le sezioni/tornei paralleli
+const addRegistrationSection = () => {
+    if (!newSection.value.name.trim() || !newSection.value.link.trim()) {
+        alert('Nome della sezione e Link di iscrizione sono obbligatori.')
+        return
+    }
+
+    form.value.registration_sections.push({
+        name: newSection.value.name.trim(),
+        link: newSection.value.link.trim()
+    })
+
+    // Reset input
+    newSection.value = { name: '', link: '' }
+}
+
+const removeRegistrationSection = (index) => {
+    form.value.registration_sections.splice(index, 1)
+}
+
 </script>
 
 <template>
@@ -319,21 +423,151 @@ const uiTexts = computed(() => {
                     </div>
                 </div>
 
+                <!-- PROGRAMMA -->
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black text-chess-chocolate uppercase tracking-[0.2em]">Programma Evento</h3>
+
+                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2.5 text-left">
+                        <p class="text-[9px] font-black uppercase text-gray-400 tracking-wider">Aggiungi Appuntamento
+                        </p>
+
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Data</label>
+                            <input v-model="newSchedule.date" type="date"
+                                class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Inizio</label>
+                                <input v-model="newSchedule.start_time" type="time"
+                                    class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" />
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Fine <span
+                                        class="text-gray-400 font-normal">(Opz.)</span></label>
+                                <input v-model="newSchedule.end_time" type="time"
+                                    class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Descrizione
+                                Attività</label>
+                            <input v-model="newSchedule.description" type="text"
+                                placeholder="Es. Primo Turno, Premiazione..."
+                                class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs"
+                                @keyup.enter="addScheduleItem" />
+                        </div>
+
+                        <button type="button" @click="addScheduleItem"
+                            class="w-full mt-1 py-2 bg-chess-dark text-chess-gold rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-chess-dark/90 transition-colors flex items-center justify-center gap-1">
+                            <Icon name="fa6-solid:plus" size="10" /> Inserisci nel Programma
+                        </button>
+                    </div>
+
+                    <div v-if="form.program.length > 0" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        <div v-for="(item, index) in form.program" :key="index"
+                            class="flex items-center justify-between p-2.5 bg-white border border-gray-100 rounded-xl shadow-sm group hover:border-chess-gold/30 transition-all">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span
+                                        class="text-[9px] font-black bg-chess-chocolate/5 text-chess-chocolate px-1.5 py-0.5 rounded uppercase">
+                                        {{ formatDateLabel(item.date) }}
+                                    </span>
+                                    <span class="text-[10px] font-bold text-chess-dark">
+                                        {{ item.start_time }}<template v-if="item.end_time"> - {{ item.end_time
+                                            }}</template>
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-0.5 font-medium truncate">
+                                    {{ item.description }}
+                                </p>
+                            </div>
+                            <button type="button" @click="removeScheduleItem(index)"
+                                class="text-gray-300 hover:text-red-500 p-1 transition-colors">
+                                <Icon name="fa6-solid:trash-can" size="12" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <p v-else class="text-[10px] text-gray-400 italic text-center py-2">
+                        Nessun appuntamento inserito nel programma.
+                    </p>
+                </div>
+
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
                     <h3 class="text-xs font-black text-chess-chocolate uppercase tracking-[0.2em] mb-4">Link e Materiali
                     </h3>
+
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Link Iscrizione</label>
-                        <input v-model="form.link_registration" type="url" placeholder="https://..."
-                            class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-[10px]" />
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">URL Locandina</label>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">URL Locandina / Bando
+                            (PDF)</label>
                         <input v-model="form.link_flyer" type="url" placeholder="https://..."
-                            class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-[10px]" />
+                            class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-chess-dark outline-none focus:ring-2 focus:ring-chess-gold/20" />
+                    </div>
+
+                    <div class="pt-2 border-t border-gray-100 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Iscrizioni</label>
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase"
+                                :class="form.registration_sections.length > 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'">
+                                {{ form.registration_sections.length > 0 ? 'Multi-Categoria' : 'Link Singolo' }}
+                            </span>
+                        </div>
+
+                        <div v-if="form.registration_sections.length === 0">
+                            <input v-model="form.link_registration" type="url"
+                                placeholder="Link unico di iscrizione (es. Vesus, Federscacchi...)"
+                                class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-chess-dark outline-none focus:ring-2 focus:ring-chess-gold/20" />
+                            <p class="mt-1 text-[9px] text-gray-400 italic">Compila qui se il torneo o l'evento ha una
+                                sola pagina di
+                                iscrizione.</p>
+                        </div>
+
+                        <div v-else
+                            class="p-3 bg-amber-50/50 border border-amber-200 rounded-xl text-[11px] text-amber-800 font-medium flex items-center gap-2">
+                            <Icon name="fa6-solid:circle-info" class="text-amber-500 shrink-0" size="14" />
+                            <span>Avendo aggiunto delle categorie specifiche qui sotto, il link unico principale verrà
+                                ignorato.</span>
+                        </div>
+
+                        <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2 text-left mt-2">
+                            <p class="text-[9px] font-black uppercase text-gray-400 tracking-wider">Configura Categorie
+                                multiple
+                                (Opzionale)</p>
+                            <div class="grid grid-cols-1 gap-2">
+                                <input v-model="newSection.name" type="text"
+                                    placeholder="Nome (Es. Open A, Torneo B-Under 16...)"
+                                    class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs font-bold" />
+                                <input v-model="newSection.link" type="url"
+                                    placeholder="Link iscrizione specifico per questa sezione..."
+                                    class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs"
+                                    @keyup.enter="addRegistrationSection" />
+                            </div>
+                            <button type="button" @click="addRegistrationSection"
+                                class="w-full py-1.5 bg-chess-chocolate/10 text-chess-chocolate hover:bg-chess-chocolate/20 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-1">
+                                <Icon name="fa6-solid:plus" size="9" /> Aggiungi questa Categoria
+                            </button>
+                        </div>
+
+                        <div v-if="form.registration_sections.length > 0" class="space-y-1.5 pt-1">
+                            <div v-for="(sec, idx) in form.registration_sections" :key="idx"
+                                class="flex items-center justify-between p-2 bg-white border border-gray-100 rounded-lg shadow-sm">
+                                <div class="min-w-0 pr-2">
+                                    <p class="text-xs font-black text-chess-dark truncate">{{ sec.name }}</p>
+                                    <p class="text-[9px] text-gray-400 truncate italic font-mono">{{ sec.link }}</p>
+                                </div>
+                                <button type="button" @click="removeRegistrationSection(idx)"
+                                    class="text-gray-300 hover:text-red-500 p-1 transition-colors">
+                                    <Icon name="fa6-solid:xmark" size="12" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
+                
 
                 <section class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
                     <div class="flex justify-between items-center">

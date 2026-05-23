@@ -42,6 +42,21 @@ const formatDate = (dateStr) => {
     })
 }
 
+// Helper per formattare il giorno del programma (es. "Sab 3/5")
+const formatProgramDate = (dateStr) => {
+    if (!dateStr) return ''
+
+    const d = new Date(dateStr)
+    // Usiamo i metodi UTC per ignorare il fuso orario locale del browser
+    const giornoSettimana = d.getUTCDay()
+    const giornoMese = d.getUTCDate()
+    const mese = d.getUTCMonth() + 1 // I mesi in JS partono da 0
+
+    const giorni = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+
+    return `${giorni[giornoSettimana]} ${giornoMese}/${mese}`
+}
+
 // Funzione helper per le icone dei circuiti
 const getCircuitLabel = (id) => {
     const circuits = {
@@ -118,12 +133,47 @@ definePageMeta({ layout: 'default' })
                     </div>
                 </section>
 
+                <section v-if="event.program && event.program.length > 0"
+                    class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+                    <h2
+                        class="text-xs font-black text-chess-gold uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                        <Icon name="fa6-solid:calendar-days" size="14" class="text-chess-gold" />
+                        Programma Dettagliato
+                    </h2>
+
+                    <div class="relative border-l-2 border-gray-100 ml-3 space-y-6">
+                        <div v-for="(item, index) in event.program" :key="index" class="relative pl-6 group">
+                            <div
+                                class="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-gray-200 border-2 border-white group-hover:bg-chess-gold group-hover:scale-110 transition-all">
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span
+                                        class="text-[10px] font-black bg-chess-chocolate/5 text-chess-chocolate px-2 py-0.5 rounded uppercase tracking-wide">
+                                        {{ formatProgramDate(item.date) }}
+                                    </span>
+                                    <span
+                                        class="text-xs font-black text-chess-dark bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                                        {{ item.start_time }}<template v-if="item.end_time"> - {{ item.end_time
+                                            }}</template>
+                                    </span>
+                                </div>
+
+                                <p class="text-sm font-bold text-gray-700 tracking-tight">
+                                    {{ item.description }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                     <h2
                         class="text-xs font-black text-chess-gold uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
                         Dove si svolge
                     </h2>
-                    <div class="flex items-start gap-4">
+                    <div v-if="event.location || event.address" class="flex items-start gap-4">
                         <div
                             class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-chess-dark shrink-0">
                             <Icon name="fa6-solid:map-location-dot" size="20" />
@@ -135,10 +185,17 @@ definePageMeta({ layout: 'default' })
                             <a :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address + ' ' + event.city)}`"
                                 target="_blank"
                                 class="inline-flex items-center gap-2 mt-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 shadow-sm text-xs font-bold text-chess-gold hover:underline uppercase">
-                                <Icon name="logos:google-maps" size="18" class="group-hover:scale-110 transition-transform" />
+                                <Icon name="logos:google-maps" size="18"
+                                    class="group-hover:scale-110 transition-transform" />
                                 Apri in Google Maps
                             </a>
                         </div>
+                    </div>
+
+                    <div v-else
+                        class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100 text-gray-400 italic text-sm">
+                        <Icon name="fa6-solid:location-dot" size="16" class="text-gray-300" />
+                        Luogo non ancora specificato dall'organizzatore.
                     </div>
                 </section>
 
@@ -153,7 +210,8 @@ definePageMeta({ layout: 'default' })
             </div>
 
             <div class="space-y-4">
-                <div class="bg-chess-dark p-8 sm:p-8 md:p-8 lg:p-6 xl:p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
+                <div
+                    class="bg-chess-dark p-8 sm:p-8 md:p-8 lg:p-6 xl:p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
 
                     <div class="space-y-6 relative z-10">
                         <div>
@@ -171,15 +229,38 @@ definePageMeta({ layout: 'default' })
                             <p class="text-sm font-bold">{{ formatDate(event.registration_time) }}</p>
                         </div>
 
-                        <div class="pt-4">
-                            <a v-if="event.link_registration" :href="event.link_registration" target="_blank"
-                                class="block w-full bg-chess-gold text-chess-dark text-center py-4 rounded-xl font-black uppercase tracking-tighter hover:scale-105 transition-transform shadow-lg">
-                                Iscriviti Ora
-                            </a>
-                            <div v-else
-                                class="text-center p-4 bg-white/5 rounded-xl border border-white/10 italic text-xs text-gray-400">
-                                Contatta l'organizzazione per iscriverti
-                            </div>
+
+
+                        <div class="pt-4 space-y-3">
+                            <template v-if="event.registration_sections && event.registration_sections.length > 0">
+                                <label
+                                    class="block text-[10px] font-black text-chess-gold uppercase tracking-widest mb-1">
+                                    Iscriviti ora
+                                </label>
+                                <div class="space-y-2">
+                                    <a v-for="(section, idx) in event.registration_sections" :key="idx"
+                                        :href="section.link" target="_blank"
+                                        class="flex items-center justify-between w-full bg-white/10 hover:bg-chess-gold text-white hover:text-chess-dark px-4 py-3.5 rounded-xl text-xs font-black uppercase tracking-tight transition-all border border-white/20 hover:border-transparent group shadow-md">
+                                        <span class="truncate pr-2">{{ section.name }}</span>
+                                        <Icon name="fa6-solid:arrow-up-right-from-square" size="12"
+                                            class="opacity-60 group-hover:opacity-100 shrink-0" />
+                                    </a>
+                                </div>
+                            </template>
+
+                            <template v-else-if="event.link_registration">
+                                <a :href="event.link_registration" target="_blank"
+                                    class="block w-full bg-chess-gold text-chess-dark text-center py-4 rounded-xl font-black uppercase tracking-tight hover:scale-[1.03] transition-transform shadow-lg">
+                                    Iscriviti Ora
+                                </a>
+                            </template>
+
+                            <template v-else>
+                                <div
+                                    class="text-center p-4 bg-white/5 rounded-xl border border-white/10 italic text-xs text-gray-400">
+                                    Contatta l'organizzazione per iscriverti
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -194,7 +275,8 @@ definePageMeta({ layout: 'default' })
                         <div v-if="event.contact_phone" class="flex items-center gap-3">
                             <Icon name="fa6-solid:phone" class="text-chess-gold" />
                             <a :href="`tel:${event.contact_phone}`"
-                                class="text-sm text-gray-600 hover:text-chess-gold">{{ event.contact_phone }}</a>
+                                class="text-sm text-gray-600 hover:text-chess-gold">{{
+                                event.contact_phone }}</a>
                         </div>
                         <div v-if="event.contact_email" class="flex items-center gap-3">
                             <Icon name="fa6-solid:envelope" class="text-chess-gold" />
