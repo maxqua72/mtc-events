@@ -1,6 +1,6 @@
 // server/utils/rolling.ts
 import { ObjectId } from 'mongodb'
-export const executeRolling = async (db, generator, targetDate) => {
+export const executeRolling = async (db: any, generator: any, targetDate: Date) => {
   const eventsToCreate = []
   let currentDate = new Date() // Partiamo da oggi
   const daysOfWeek = generator.recurrence.days_of_week // [1, 3, 5]

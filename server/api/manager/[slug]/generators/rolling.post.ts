@@ -11,16 +11,20 @@ export default defineEventHandler(async (event) => {
   if (!asd) throw createError({ statusCode: 404, message: 'ASD non trovata' })
 
   // 2. Prepariamo il filtro
-  const searchFilter = {
-    association_id: asd._id,
-    status: 'active',
-    // Qui applichiamo is_published perché questo è un rolling batch (multiplo)
-    is_published: true 
-  }
+  const searchFilter: {
+  association_id: any
+  status: string
+  is_published: boolean
+  category?: string // 👈 Il punto di domanda dice che può esserci o meno
+} = {
+  association_id: asd._id,
+  status: 'active',
+  is_published: true
+}
   
   // Se l'utente ha filtrato per categoria (es. "torneo")
   if (categoryFilter && categoryFilter !== 'all') {
-    searchFilter.category = categoryFilter.toLowerCase()
+    searchFilter.category = String(categoryFilter).toLowerCase()
   }
 
   const generators = await db.collection('generators').find(searchFilter).toArray()

@@ -156,6 +156,11 @@ export default defineNuxtConfig({
       'generators/rolling': {
         handler: './server/tasks/generators/rolling.ts',
         description: 'Generazione notturna automatica degli eventi ricorrenti'
+      },
+      // 
+      'email/flush': {
+        handler: './server/tasks/email/flush.ts',
+        description: 'Invio massivo email in coda (priorità bassa/differite)'
       }
     }
   },

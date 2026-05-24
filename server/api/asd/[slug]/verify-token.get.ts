@@ -121,7 +121,17 @@ export default defineEventHandler(async (event) => {
       // 1. Recuperiamo la sessione esistente (se il manager gestisce già altre ASD)
       const session = await getUserSession(event)
       const sessuser = session.user as any
-      const currentManagedAsds = sessuser?.managed_asds || []
+      const rawManagedAsds = sessuser?.managed_asds || []
+
+      // 2. SANATORIA DATI CORROTTI (De-duplicazione immediata all'origine)
+      // Usiamo una Map usando 'asd_slug' come chiave univoca. 
+      // Se ci sono duplicati nel cookie dell'utente, la Map terrà solo l'ultimo, eliminando i doppioni.
+      const cleanedMap = new Map(
+        rawManagedAsds.map((item: any) => [item.asd_slug, item])
+      )
+      
+      // Trasformiamo nuovamente la Map in un array pulito
+      const currentManagedAsds = Array.from(cleanedMap.values())
 
       // 2. Aggiungiamo la nuova ASD evitando duplicati
       const alreadyManaged = currentManagedAsds.some((a: any) => a.asd_slug === slug)
@@ -156,7 +166,8 @@ export default defineEventHandler(async (event) => {
         asd_profile: asdProfile,
         // Dati per managed_asds (da aggiungere al cookie)
         new_managed_asd: {
-          _id: asd._id.toString(),
+          //_id: asd._id.toString(),
+          asd_id: asd._id.toString(),
           asd_slug: asd.slug,
           asd_name: asd.name,
           role: 'MANAGER'

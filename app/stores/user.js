@@ -119,7 +119,20 @@ export const useUserStore = defineStore('user', {
             // Se la sessione esiste (letta da server tramite cookie o da client tramite fetch), 
             // popoliamo lo stato 'auth' usato dai tuoi getter (isAdmin, isManager).
             if (user.value) {
-                this.auth = user.value
+                //this.auth = user.value
+                // Creiamo una copia profonda per non mutare l'oggetto originale di Nuxt Auth
+                const cleanedUser = { ...user.value }
+
+                if (cleanedUser.managed_asds && Array.isArray(cleanedUser.managed_asds)) {
+                // Raggruppiamo per asd_slug eliminando i duplicati al volo nel frontend
+                const cleanedMap = new Map(
+                    cleanedUser.managed_asds.map((item) => [item.asd_slug, item])
+                )
+                cleanedUser.managed_asds = Array.from(cleanedMap.values())
+    }
+
+    this.auth = cleanedUser
+
                 console.log(`[STORE INIT] 🛡️ Auth impostato nello store per:`, this.auth.email);
                 console.log(`🛡️ [${process.server ? 'SERVER' : 'CLIENT'}] Sessione sicura caricata per:`, user.value.email);
 

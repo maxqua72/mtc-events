@@ -56,12 +56,23 @@ export default defineEventHandler(async (event) => {
   // --- MODIFICA SOLUZIONE 10 ---
 
   // 4. Prepariamo i dati per il cookie blindato
+  // 4a. Recuperiamo le ASD dal DB (gestendo il fallback se l'array non esiste)
+  const rawManagedAsds = user.managed_asds || [];
+
+  // 4b. BONIFICA DATI (De-duplicazione preventiva)
+  // Se sul DB l'utente ha array duplicati storici, li filtriamo all'istante usando lo slug come chiave
+  const cleanedMap = new Map(
+    rawManagedAsds.map((item: any) => [item.asd_slug, item])
+  );
+  const cleanedManagedAsds = Array.from(cleanedMap.values());
+
+
   // Questi sono i dati che useUserSession() leggerà nel frontend
   const sessionUser = {
     id: user._id.toString(),
     email: user.email,
     is_admin: user.is_admin || false,
-    managed_asds: user.managed_asds || [],
+    managed_asds: cleanedManagedAsds,
     name: user.name || 'Admin' // Aggiungi campi utili se ne hai
   };
 
