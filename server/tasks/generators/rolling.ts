@@ -29,7 +29,7 @@ export default defineTask({
       if (rollingResult.count > 0) {
         details.push({
           generator_id: gen._id,
-          name: gen.name || 'Senza nome',
+          name: gen.title || 'Senza nome',
           created: rollingResult.count,
           upTo: rollingResult.last_date.toISOString().split('T')[0] // Formato YYYY-MM-DD
         })
