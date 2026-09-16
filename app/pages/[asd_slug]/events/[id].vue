@@ -2,6 +2,18 @@
 const route = useRoute()
 const { asd_slug, id } = route.params
 
+// Questo codice serve per gestire la visualizzazione della locandina
+const docViewerRef = ref(null)
+const selectedDocUrl = ref('')
+const selectedDocTitle = ref('')
+
+const openFlyer = (url, title = 'Locandina Evento') => {
+    if (!url) return
+    selectedDocUrl.value = url
+    selectedDocTitle.value = title
+    docViewerRef.value?.open()
+}
+
 // Recuperiamo i dati dell'evento dall'API pubblica
 const { data: event, pending, error } = await useFetch(`/api/events/${id}`)
 
@@ -198,7 +210,7 @@ definePageMeta({ layout: 'default' })
                         Luogo non ancora specificato dall'organizzatore.
                     </div>
                 </section>
-
+<!--
                 <a v-if="event.link_flyer" :href="event.link_flyer" target="_blank"
                     class="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl group hover:bg-red-500 transition-colors">
                     <div class="flex items-center gap-3 text-red-600 group-hover:text-white">
@@ -207,6 +219,19 @@ definePageMeta({ layout: 'default' })
                     </div>
                     <Icon name="fa6-solid:download" class="text-red-400 group-hover:text-white" />
                 </a>
+-->
+                <button 
+                    v-if="event.link_flyer" 
+                    @click="openFlyer(event.link_flyer, event.title)"
+                    type="button"
+                    class="w-full flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl group hover:bg-red-500 transition-colors text-left"
+                >
+                    <div class="flex items-center gap-3 text-red-600 group-hover:text-white">
+                        <Icon name="fa6-solid:file-pdf" size="24" />
+                        <span class="text-xs font-black uppercase">Visualizza Locandina</span>
+                    </div>
+                    <Icon name="fa6-solid:eye" class="text-red-400 group-hover:text-white" />
+                </button>
             </div>
 
             <div class="space-y-4">
@@ -290,6 +315,11 @@ definePageMeta({ layout: 'default' })
 
             </div>
         </div>
+        <DocumentViewer 
+            ref="docViewerRef" 
+            :file-url="selectedDocUrl" 
+            :title="selectedDocTitle" 
+        />
     </div>
 </template>
 

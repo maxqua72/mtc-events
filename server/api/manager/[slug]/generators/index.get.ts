@@ -10,11 +10,17 @@ export default defineEventHandler(async (event) => {
   // asd._id potrebbe essere già un ObjectId o una stringa a seconda del driver/setup
   const targetId = typeof asd._id === 'string' ? new ObjectId(asd._id) : asd._id
 
+  const rawId = asd._id.toString()
+  const objectId = ObjectId.isValid(rawId) ? new ObjectId(rawId) : asd._id
+
   console.log("Cerco generatori per ID:", targetId) // Debug log
 
   // Restituiamo tutti i generatori dell'associazione
   return await db.collection('generators')
-    .find({ association_id: targetId })
+    //.find({ association_id: targetId })
+    .find({ 
+      association_id: { $in: [objectId, rawId] } 
+    })
     .sort({ created_at: -1 })
     .toArray()
 })

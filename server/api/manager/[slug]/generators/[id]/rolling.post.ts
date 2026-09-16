@@ -2,17 +2,34 @@ import { ObjectId } from 'mongodb'
 
 export default defineEventHandler(async (event) => {
   const db = await getDb()
-  const { slug, id } = event.context.params
+  //const { slug, id } = event.context.params
+  // Otteniamo i parametri in modo type-safe
+  const params = getRouterParams(event)
+  const slug = params.slug
+  const id = params.id
   
   // 1. Leggiamo eventuali filtri o date dal body/query
   const body = await readBody(event).catch(() => ({}))
   const query = getQuery(event)
+
+  // 1. Recuperiamo prima l'associazione tramite lo slug
+  const asd = await db.collection('associations').findOne({ slug })
+  if (!asd) {
+    throw createError({ statusCode: 404, message: 'Associazione non trovata' })
+  }
+
+  const asdStringId = asd._id.toString()
+  const asdObjectId = ObjectId.isValid(asdStringId) ? new ObjectId(asdStringId) : asd._id
   
   // Se c'è un ID nell'URL, gestiamo il rolling SINGOLO MANUALE
   if (id) {
+    if (!ObjectId.isValid(id)) {
+      throw createError({ statusCode: 400, message: 'ID Generatore non valido' })
+    }
     const generator = await db.collection('generators').findOne({ 
       _id: new ObjectId(id),
-      asd_slug: slug 
+      //asd_slug: slug 
+      association_id: { $in: [asdObjectId, asdStringId] }
     })
 
     if (!generator) {
@@ -20,7 +37,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Per il manuale usiamo la target_date passata dal calendario
-    const targetDate = body.target_date ? new Date(body.target_date) : new Date()
+    const targetDate = body?.target_date ? new Date(body.target_date) : new Date()
+    console.log(`Eseguo rolling manuale per generatore ${id} fino a ${targetDate.toISOString()}`)
     const result = await executeRolling(db, generator, targetDate)
 
     return { 
@@ -33,7 +51,8 @@ export default defineEventHandler(async (event) => {
   // 2. Se NON c'è ID, gestiamo il rolling di GRUPPO (Filtrato o Globale)
   const category = query.category as string
   const filter: any = { 
-    asd_slug: slug,
+    //asd_slug: slug,
+    association_id: { $in: [asdObjectId, asdStringId] }, 
     status: 'active',
     is_published: true
  }
