@@ -25,3 +25,7 @@ logs
 
 #zip
 build.zip
+
+# File locali di lavoro con Claude Code
+CLAUDE.md
+docs/analisi-mtc-events.md
