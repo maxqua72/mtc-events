@@ -53,7 +53,8 @@ const submitChange = async () => {
                 newPassword: form.value.newPassword
             }
         })
-        emit('success', data.permissions)
+        // Il secondo argomento serve a /login per rifare l'accesso con la nuova password
+        emit('success', data.permissions, form.value.newPassword)
     } catch (e) {
         localError.value = e.statusMessage || "Impossibile aggiornare la password."
     } finally {

@@ -26,13 +26,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       */
      console.log(`[AUTH MIDDLEWARE] 🔒 Sessione assente o scaduta per la rotta: ${to.path}`);
 
-    // COMPORTAMENTO ADMIN: Se tentava di andare in /admin, lo mandiamo alla pagina di join dell'ultima ASD visitata (o login)
+    // COMPORTAMENTO ADMIN: se tentava di andare in /admin, lo mandiamo al login di sistema,
+    // che non richiede nessuna ASD e al termine lo riporta alla pagina richiesta
     if (isAdminPath) {
-      const lastAsd = userStore.lastVisitedAsd || slug
-      if (lastAsd) {
-        return navigateTo(`/${lastAsd}/join`)
-      }
-      return navigateTo('/') // Fallback se non c'è traccia dell'ASD
+      return navigateTo({ path: '/login', query: { redirect: to.fullPath } })
     }
 
     // COMPORTAMENTO MANAGER / CLUB ROUTE: Se salta la sessione, lo mandiamo alla pagina eventi pubblica del club
