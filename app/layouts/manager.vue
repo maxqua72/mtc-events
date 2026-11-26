@@ -79,8 +79,11 @@ const route = useRoute()
 const asdSlug = route.params.asd_slug
 const { data: asd } = await useFetch(`/api/manager/${asdSlug}/info`)
 
-const logout = () => {
-  localStorage.removeItem('user_auth')
-  navigateTo('/login')
+const userStore = useUserStore()
+
+// Chiude davvero la sessione (cookie sigillato) e torna alla pagina di accesso dell'ASD
+const logout = async () => {
+  await userStore.logout()
+  navigateTo(`/${asdSlug}/join`)
 }
 </script>
