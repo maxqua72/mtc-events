@@ -34,8 +34,13 @@ tests/
   server/
     auth.test.ts            helper di autorizzazione (server/utils/auth.ts)
     auth-middleware.test.ts middleware server/middleware/auth.ts
+    cron-auth.test.ts       protezione dei cron (server/utils/cron-auth.ts)
     crypto-utils.test.ts    cifratura, mascheramento, hash password (server/utils/crypto-utils.ts)
+  app/
+    api-auth-errors.test.ts gestione client dei 401/403 (app/utils/api-auth-errors.ts)
 ```
+
+I test in `tests/app/` coprono solo **funzioni pure** del client (niente componenti Vue né ambiente Nuxt): la logica da testare va messa in `app/utils/` e importata con un percorso relativo.
 
 ## Come funzionano le simulazioni
 
@@ -53,9 +58,13 @@ Nitro rende **globali** alcune funzioni (auto-import): `getDb`, `getUserSession`
 |---|---|
 | `auth.test.ts` (17 test) | 401 senza sessione, id di sessione non valido, utente cancellato dal DB; admin anche con `is_admin: "true"` stringa; manager della propria ASD sì, di un'altra no; manager storici con `users.managed_asds`; ruoli falsificati nel cookie (`is_admin`, `managed_asds`) ignorati; admin su slug inesistente. |
 | `auth-middleware.test.ts` (20 test) | Percorsi `/api/admin/**` e `/api/manager/{slug}/**` protetti, anche con slash doppi, maiuscole, caratteri codificati (`%61dmin`); percorsi pubblici non toccati (`/api/administrator`, `/api/managers`, API pubbliche); 400 su codifica non valida; propagazione degli errori. |
+| `cron-auth.test.ts` (14 test) | Segreto corretto; `bearer` minuscolo; 401 senza header, con segreto sbagliato, troncato, allungato o senza `Bearer`; 503 con `CRON_SECRET` mancante, vuoto o corto (anche `Bearer undefined`); indirizzo locale dal socket (`127.0.0.1`, `::1`, `::ffff:127.0.0.1`); `X-Forwarded-For` falsificato ignorato; in sviluppo conta solo l'ultimo valore dell'header. |
+| `api-auth-errors.test.ts` (7 test) | Solo 401/403 e solo API admin/manager; destinazione del 401 secondo la pagina (admin → `/login?redirect=`, manager → `/<slug>/join`); 403 → «Permesso negato»; URL assoluti, `Request`, slash doppi e maiuscole. |
 | `crypto-utils.test.ts` (7 test) | encrypt/decrypt reversibili, IV casuale, formato `iv:tag:testo`, dati in chiaro passano invariati, dato manomesso rifiutato, mascheramento email/cognome, hash password compatibile con il login. |
 
-**Non coperto (ancora):** le singole API, le pagine Vue, il flusso completo con un DB reale. Ogni intervento successivo aggiunge i test per il codice che modifica.
+Totale: 65 test.
+
+**Non coperto (ancora):** le singole API, le pagine Vue, il plugin client nel browser (verificato a mano), il flusso completo con un DB reale. Ogni intervento successivo aggiunge i test per il codice che modifica.
 
 ## Aggiungere un test
 

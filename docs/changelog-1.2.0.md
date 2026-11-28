@@ -12,7 +12,7 @@ Il piano completo e le priorità sono in `analisi-mtc-events.md` (sezioni 7 e 8)
 | — | Login admin su `/login` | `feat/1.2.0-admin-login` | ✅ in `release/1.2.0` |
 | 1 | Test automatici | `feat/1.2.0-test-setup` | ✅ in `release/1.2.0` |
 | 2 | Pulizia del codice legacy | `feat/1.2.0-cleanup-legacy` | ✅ in `release/1.2.0` |
-| 3 | auth-server (cron, 401 lato client) | — | da fare |
+| 3 | auth-server (cron, 401 lato client) | `feat/1.2.0-auth-server` | 🔄 in revisione |
 | 4 | public-api (proiezioni) | — | da fare |
 | 5 | rate-limit e token | — | da fare |
 | 6 | log-hygiene | — | da fare |
@@ -73,3 +73,24 @@ Il piano completo e le priorità sono in `analisi-mtc-events.md` (sezioni 7 e 8)
 - Con i dati attuali quelle pagine trovavano il socio solo nei record con email **in chiaro** (record storici precedenti alla cifratura): proprio quei record erano esposti dall'API rimossa.
 
 **Verifica:** `/<slug>/auth` e `/api/asd/<slug>/membership?email=x` → 404; `/<slug>/events`, `/<slug>/join`, `/login` funzionano.
+
+## 3 — Protezione dei cron e gestione dei 401/403 nell'app (1.2.0)
+
+**Server** (`server/utils/cron-auth.ts`, `server/api/cron/*`):
+- `requireCronSecret`: se `CRON_SECRET` manca o ha meno di 16 caratteri risponde 503 e non accetta nessuna chiamata (prima `Bearer undefined` passava); confronto del segreto a tempo costante (`timingSafeEqual` sugli hash SHA-256).
+- `rolling`: il controllo «solo dalla stessa macchina» usa l'indirizzo del socket e non più `X-Forwarded-For`, che era falsificabile. In sviluppo, dietro il proxy di `nuxi`, conta solo l'ultimo valore dell'header.
+
+**Client** (`app/plugins/api-auth-errors.client.ts`, `app/utils/api-auth-errors.ts`):
+- 401 da un'API admin/manager → sessione cancellata e ritorno a `/login` (pagine admin) o `/<slug>/join` (pagine manager);
+- 403 → pagina «Permesso negato» con il messaggio del server.
+Dettagli in [accessi-e-autorizzazioni.md](accessi-e-autorizzazioni.md).
+
+**Utenti:** visitatori e soci non toccati. Un admin o manager revocato, o cancellato dal DB, viene portato fuori dall'area riservata alla prima chiamata invece di vedere errori generici. Nessuna disconnessione di massa: si esce solo se il server ha già rifiutato la sessione.
+
+**Compatibilità con i dati di produzione:** ✅ nessun dato nel DB modificato. ⚠️ Da controllare **sul server di produzione** prima del rilascio:
+- `CRON_SECRET` deve essere impostato e lungo almeno 16 caratteri, altrimenti i cron rispondono 503 (email in coda non inviate, eventi ricorrenti non generati);
+- lo scheduler deve chiamare `/api/cron/rolling` dalla stessa macchina dell'app (direttamente o tramite un proxy locale). Se oggi passa da un proxy su un'altra macchina e funziona solo grazie a `X-Forwarded-For`, dopo il rilascio riceverà 403.
+
+**Verifica:**
+- `curl http://127.0.0.1:3000/api/cron/rolling` → 401; con `-H "Authorization: Bearer undefined"` → 401; col segreto giusto → 200. Senza `CRON_SECRET` nell'ambiente → 503.
+- Entrare come admin su `/admin`, togliere `is_admin` all'utente nel DB, fare un'azione nel pannello → «Permesso negato». Cancellare l'utente (di prova) e ripetere → `/login?redirect=%2Fadmin`.

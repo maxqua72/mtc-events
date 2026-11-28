@@ -305,7 +305,22 @@ L'app non pianifica nulla da sola: i task Nitro vanno richiamati dall'esterno.
 | Endpoint | Task | Frequenza consigliata | Vincoli |
 |---|---|---|---|
 | `GET /api/cron/flush-email` | `email/flush`: invia le email rimaste in coda | ogni 15–60 minuti | header `Authorization: Bearer <CRON_SECRET>` |
-| `GET /api/cron/rolling` | `generators/rolling`: genera gli eventi dei generatori | una volta per notte | stesso header; **solo da localhost** |
+| `GET /api/cron/rolling` | `generators/rolling`: genera gli eventi dei generatori | una volta per notte | stesso header; **solo dalla stessa macchina** |
+
+Risposte (dalla 1.2.0):
+
+| Codice | Significato |
+|---|---|
+| 200 | Task eseguito. |
+| 401 | Header `Authorization` mancante o segreto sbagliato. |
+| 403 | Solo `rolling`: la connessione non arriva dalla macchina stessa. |
+| 503 | `CRON_SECRET` non impostato o più corto di 16 caratteri: **nessuna** chiamata viene accettata. |
+
+«Dalla stessa macchina» vuol dire che conta l'indirizzo reale della connessione (`127.0.0.1` o `::1`), **non** l'header `X-Forwarded-For`, che un client può falsificare. Quindi:
+
+- lo scheduler deve chiamare direttamente il processo Node (`http://127.0.0.1:<porta>/api/cron/rolling`) oppure un reverse proxy sulla stessa macchina;
+- con un reverse proxy su un'altra macchina, `rolling` risponde sempre 403;
+- in sviluppo (`npm run dev`) il server sta dietro il proxy di `nuxi`, che non passa l'indirizzo del socket: in quel caso, e solo in sviluppo, si usa l'**ultimo** valore di `X-Forwarded-For`, quello scritto dal proxy.
 
 Lancio manuale in locale, da PowerShell:
 
@@ -321,7 +336,7 @@ $h = @{ Authorization = "Bearer $env:CRON_SECRET" }; Invoke-RestMethod -Uri http
 
 In produzione si usa lo scheduler del server, ad esempio Task Scheduler o cron, che chiama gli stessi URL dalla stessa macchina.
 
-> ⚠️ Assicurati che `CRON_SECRET` sia sempre impostato. Oggi, se manca, il controllo accetta l'header letterale `Bearer undefined`. Si corregge nella 1.2.0.
+> ⚠️ **Su 1.1.x**, se `CRON_SECRET` manca, il controllo accetta l'header letterale `Bearer undefined`: tienilo sempre impostato. Dalla 1.2.0 un segreto mancante o più corto di 16 caratteri blocca i cron (503). Generalo con il comando del passo 0.
 
 ---
 
@@ -376,5 +391,8 @@ Tutti questi problemi sono documentati nell'analisi. Quelli ancora aperti verran
 | Le push ai soci non arrivano | Stessa causa: il token FCM viene inviato insieme all'email mascherata. |
 | `/<slug>/auth` e `/<slug>/membership` rispondono 404 | Pagine legacy rimosse in 1.2.0 (`cleanup-legacy`): il socio entra solo da `/<slug>/join`. In produzione (1.1.1) esistono ancora ma non vanno usate, come il vecchio `/login`. |
 | Un admin o un manager entrato con username e password vede «Permesso negato» sulle pagine `/<slug>/manager/...` | Il login con credenziali mette nella sessione le ASD dal vecchio campo `users.managed_asds`, non dalla collezione `managers`. I manager entrano con il codice a 9 caratteri; l'admin non ha questo problema. |
+| I cron rispondono 503 | `CRON_SECRET` manca o ha meno di 16 caratteri (1.2.0): vedi il passo 8. |
+| `/api/cron/rolling` risponde 403 anche con il segreto giusto | La chiamata non arriva dalla stessa macchina (ad esempio passa da un proxy remoto): vedi il passo 8. |
+| Durante il lavoro nel pannello si finisce su `/login` o su «Permesso negato» | Comportamento voluto (1.2.0): un'API ha risposto 401 (sessione non più valida) o 403 (permesso revocato). Vedi [accessi-e-autorizzazioni.md](accessi-e-autorizzazioni.md). |
 | Il server stampa email e sessioni nei log | Log di debug da eliminare: non condividere i log. |
 | Le API admin e manager rispondono 401/403 | Comportamento corretto dalla 1.1.1: serve una sessione con il ruolo giusto, vedi [accessi-e-autorizzazioni.md](accessi-e-autorizzazioni.md). Restano altri punti aperti (rate limit, validazione dei dati): **non esporre un'istanza di test su Internet.** |
