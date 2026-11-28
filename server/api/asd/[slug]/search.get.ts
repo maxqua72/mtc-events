@@ -1,62 +1,76 @@
 // server/api/asd/[slug]/search.get.ts
+// Ricerca pubblica sugli eventi di un'ASD.
+// - I visitatori vedono solo gli eventi pubblicati.
+// - I soci vengono cercati SOLO se l'utente in sessione è manager dell'ASD (o admin),
+//   e vengono restituiti solo i campi mostrati nei risultati (niente token).
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const safeDecrypt = (value: any) => {
+  try {
+    return decrypt(value)
+  } catch {
+    return '****'
+  }
+}
+
 export default defineEventHandler(async (event) => {
-  // Estraiamo i parametri forzando il tipo
   const params = event.context.params as { slug: string }
   const slug = params?.slug
-  
+
   const query = getQuery(event)
-  const q = query.q as string || ''
-  const includeMembers = query.includeMembers === 'true'
+  const q = typeof query.q === 'string' ? query.q.slice(0, 100) : ''
+  const wantsMembers = query.includeMembers === 'true'
 
   if (!slug) {
     throw createError({ statusCode: 400, message: 'Missing ASD slug' })
   }
 
   const db = await getDb()
-  const asd = await db.collection('associations').findOne({ slug: slug })
+  const asd = await db.collection('associations').findOne({ slug })
+  if (!asd) {
+    throw createError({ statusCode: 404, message: 'Associazione non trovata' })
+  }
 
-  const searchRegex = new RegExp(q as string, 'i')
+  const user = await getSessionDbUser(event)
+  const isManager = await canManageAsd(user, asd)
 
-  // 1. Ricerca sempre gli eventi (pubblici)
-  const eventsPromise = db.collection('events').find({
+  const searchRegex = new RegExp(escapeRegex(q), 'i')
+
+  // 1. Eventi: ai non-manager solo quelli pubblicati
+  const eventsFilter: any = {
     association_id: asd._id,
     $or: [
       { title: searchRegex },
       { category: searchRegex }
     ]
-  }).limit(10).toArray()
+  }
+  if (!isManager) eventsFilter.is_published = true
 
-  // 2. Ricerca i soci SOLO se richiesto (il controllo permessi finale andrebbe fatto qui con il token sessione)
-  let members = []
+  const eventsPromise = db.collection('events').find(eventsFilter).limit(10).toArray()
 
-  //console.log('Search query:', q, ' Include members:', includeMembers, ' Slug:', slug, ' Search regex:', searchRegex)
-  if (includeMembers) {
-    const searchString = q as string
-
-    
-
-    members = await db.collection('memberships').find({
-      association_id: asd._id, // Assicurati che l'ID o slug corrisponda
-      $or: [
-        { name: searchRegex },
-        { surname: searchRegex },
-        { email: searchRegex },
-        { member_code: searchRegex },
-        // Ricerca combinata Nome + Cognome
-        { 
-        $expr: {
-          $regexMatch: {
-            input: { $concat: ["$name", " ", "$surname"] },
-            regex: searchString,
-            options: "i"
-          }
-        }
-      }
-      ]
-    }).limit(10).toArray()
+  // 2. Soci: solo per manager/admin di questa ASD
+  let membersPromise: Promise<any[]> = Promise.resolve([])
+  if (wantsMembers && isManager) {
+    membersPromise = db.collection('memberships').find(
+      {
+        association_id: asd._id,
+        $or: [
+          { name: searchRegex },
+          { surname: searchRegex },
+          { email: searchRegex },
+          { member_code: searchRegex }
+        ]
+      },
+      { projection: { name: 1, surname: 1, email: 1, member_code: 1, status: 1, expiry_date: 1 } }
+    ).limit(10).toArray()
+      .then(list => list.map(m => ({
+        ...m,
+        surname: safeDecrypt(m.surname),
+        email: safeDecrypt(m.email)
+      })))
   }
 
-  const [foundEvents, foundMembers] = await Promise.all([eventsPromise, members])
+  const [foundEvents, foundMembers] = await Promise.all([eventsPromise, membersPromise])
 
   return {
     events: foundEvents,
