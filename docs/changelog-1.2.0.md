@@ -12,7 +12,7 @@ Il piano completo e le priorità sono in `analisi-mtc-events.md` (sezioni 7 e 8)
 | — | Login admin su `/login` | `feat/1.2.0-admin-login` | ✅ in `release/1.2.0` |
 | 1 | Test automatici | `feat/1.2.0-test-setup` | ✅ in `release/1.2.0` |
 | 2 | Pulizia del codice legacy | `feat/1.2.0-cleanup-legacy` | ✅ in `release/1.2.0` |
-| 3 | auth-server (cron, 401 lato client) | `feat/1.2.0-auth-server` | 🔄 in revisione |
+| 3 | auth-server (cron, 401 lato client) | `feat/1.2.0-auth-server` | ✅ in `release/1.2.0` |
 | 4 | public-api (proiezioni) | — | da fare |
 | 5 | rate-limit e token | — | da fare |
 | 6 | log-hygiene | — | da fare |
