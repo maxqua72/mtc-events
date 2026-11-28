@@ -1,29 +1,19 @@
 // server/api/cron/rolling.get.ts
+// Genera le occorrenze future degli eventi ricorrenti (task generators/rolling).
+// Accetta solo chiamate dalla macchina stessa e con CRON_SECRET.
 export default defineEventHandler(async (event) => {
-    //Accetta la chiamata solo se arriva dall'interno (localhost)
-    const clientAddress = getRequestIP(event, { xForwardedFor: true })
-  
-  // Se la chiamata non viene da 127.0.0.1 (localhost), la blocchiamo a prescindere dalla chiave
-  const isLocal = clientAddress === '127.0.0.1' || clientAddress === '::1'
-  
-  if (!isLocal) {
+  // L'indirizzo è quello del socket: X-Forwarded-For non conta, perché si può falsificare
+  if (!isLocalConnection(event)) {
     throw createError({ statusCode: 403, message: 'Accesso consentito solo localmente' })
   }
 
-  // Controllo di sicurezza: una chiave segreta passata nell'header o come query
-  const config = useRuntimeConfig()
-  const authHeader = getHeader(event, 'Authorization')
-  
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    throw createError({ statusCode: 401, message: 'Non autorizzato' })
-  }
+  requireCronSecret(event)
 
-  // Eseguiamo il task Nitro internamente
   const result = await runTask('generators/rolling')
-  
-  return { 
-    success: true, 
+
+  return {
+    success: true,
     timestamp: new Date().toISOString(),
-    result 
+    result
   }
 })

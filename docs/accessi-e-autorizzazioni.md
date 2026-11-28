@@ -36,6 +36,7 @@ File: `server/middleware/auth.ts` (eseguito su ogni richiesta) e `server/utils/a
 |---|---|---|---|
 | `/api/admin/**` | `requireAdmin`: `users.is_admin` vero (anche la stringa `"true"`) | 401 | 403 |
 | `/api/manager/{slug}/**` | `requireAsdManager`: admin, oppure documento in `managers` con `user_id` + `association_id` dell'ASD, oppure `users.managed_asds` contiene lo slug (compatibilità con utenti storici) | 401 | 403 |
+| `/api/cron/**` | `requireCronSecret` nell'handler (`server/utils/cron-auth.ts`): header `Authorization: Bearer <CRON_SECRET>`, confronto a tempo costante; `rolling` anche `isLocalConnection` | 401 (503 se `CRON_SECRET` manca o ha meno di 16 caratteri) | 403 (`rolling` da un'altra macchina) |
 | Tutto il resto | Nessun controllo dal middleware | — | — |
 
 Dettagli:
@@ -63,7 +64,7 @@ Da risolvere negli interventi successivi della 1.2.0 (vedi [changelog-1.2.0.md](
 - i body delle richieste non sono validati (mass assignment);
 - nessun rate limit su login, codici e cambio password;
 - `POST /api/auth/update-password` non richiede sessione;
-- gli endpoint `/api/cron/*` accettano `Bearer undefined` se `CRON_SECRET` manca;
+- `POST /api/asd/{slug}/join` registra nell'accettazione dei documenti legali l'IP letto da `X-Forwarded-For`, che il client può falsificare (dato informativo, non un controllo di accesso);
 - le API dei soci (`sync-status`, `sync-fcm-token`) lavorano per email e non per sessione.
 
 ## Protezione lato client
@@ -75,6 +76,22 @@ Da risolvere negli interventi successivi della 1.2.0 (vedi [changelog-1.2.0.md](
 - `/<slug>/manager/**` con sessione ma senza quello slug in `managed_asds` e senza `is_admin` → pagina 403 «Permesso negato».
 
 È solo una comodità per l'interfaccia: la protezione vera è quella del server.
+
+### Risposte 401/403 delle API (1.2.0)
+
+Il cookie può ancora dire «admin» o «manager» quando il server ha già tolto il permesso. Il plugin `app/plugins/api-auth-errors.client.ts` intercetta ogni `$fetch`/`useFetch` **nel browser** verso `/api/admin/**` e `/api/manager/**`. La decisione sta in `app/utils/api-auth-errors.ts`, testata.
+
+| Risposta | Cosa succede |
+|---|---|
+| 401 (sessione non più valida, ad esempio utente cancellato) | Cancella la sessione (`DELETE /api/_auth/session`) e porta a `/login?redirect=<pagina>` dalle pagine admin, a `/<slug>/join` dalle pagine manager, altrimenti a `/login`. |
+| 403 (sessione valida, permesso revocato) | Pagina di errore «Permesso negato» con il messaggio del server. La sessione resta. |
+
+Altri errori e le API pubbliche (`/api/auth/login`, `verify-token`...) non vengono toccati. I dati del socio nel `localStorage` restano intatti.
+
+Limiti noti:
+
+- le chiamate fatte durante il rendering lato server (primo caricamento della pagina) non passano dal plugin: la pagina mostra il proprio errore;
+- dopo un 403 il cookie dice ancora «admin»/«manager», quindi il menu e il pulsante «Riprendi navigazione» possono riportare alla stessa area, che risponderà di nuovo 403. Si risolve con il registro delle sessioni (`session-registry`).
 
 ## Pagine
 

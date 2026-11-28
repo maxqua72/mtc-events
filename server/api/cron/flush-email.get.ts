@@ -1,27 +1,11 @@
 // server/api/cron/flush-email.get.ts
-//import { defineEventHandler, createError } from 'h3'
-
+// Invia le email rimaste in coda (task email/flush). Richiede CRON_SECRET.
 export default defineEventHandler(async (event) => {
-  // 1. Recuperiamo il Bearer token dall'header di Authorization
-  const authHeader = getHeader(event, 'authorization')
-  
-  // 2. Recuperiamo il segreto definito nelle variabili d'ambiente del server
-  const config = useRuntimeConfig()
-  const cronSecret = process.env.CRON_SECRET || config.cronSecret
-
-  // 3. Validazione del token per impedire accessi esterni non autorizzati
-  if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
-      message: 'Invalid or missing Cron Secret Token'
-    })
-  }
+  requireCronSecret(event)
 
   try {
-    // 4. Invochiamo il task compilato usando la chiave registrata
     const taskResult = await runTask('email/flush')
-    
+
     return {
       success: true,
       timestamp: new Date().toISOString(),
